@@ -28,14 +28,16 @@ module Top;
 
   initial
     begin
-      #15 $finish;
+      #25 $finish;
     end
 
   initial
     begin
       read = 0; write = 0;
-      #5 write = 1; addr = 'b1010; write_byte = 'b111;
-      #5 write = 0; addr = 'b1010; read = 1;
+      #5 read = 0; write = 1; addr = 'b1010; write_byte = 'b111;
+      #5 read = 1; write = 0; addr = 'b1010;
+      #5 read = 0; write = 1; addr = 'b1011; write_byte = 'b110;
+      #5 read = 1; write = 0; addr = 'b1011;
     end
 
 endmodule // Top

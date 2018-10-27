@@ -1,6 +1,9 @@
 .PHONY: all
 all: flash-uart_hello
 
+memory_tb.out: uart_memory.v
+controller_tb.out: uart_memory.v
+
 .PRECIOUS: %.bin %.vcd
 
 %.blif: %.v
@@ -25,6 +28,10 @@ flash-%: %.bin
 .PHONY: sim-%
 sim-%: %.vcd
 	gtkwave $<
+
+.PHONY: run-%
+run-%: %.out
+	./$<
 
 .PHONY: clean
 clean:
