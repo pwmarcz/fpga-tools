@@ -4,11 +4,12 @@ module Top;
   reg clock;
   reg received = 0;
   reg [7:0] rx_byte;
+  reg is_transmitting = 0;
 
   wire transmit;
   wire [7:0] tx_byte;
 
-  memory_controller mc(clock, received, rx_byte, transmit, tx_byte);
+  memory_controller mc(clock, received, rx_byte, is_transmitting, transmit, tx_byte);
 
   initial
     begin
@@ -39,7 +40,7 @@ module Top;
       received = 0;
 
       recv_byte(`COMMAND_WRITE);
-      recv_byte(3);
+      recv_byte(2);
       recv_byte('h0E);
       recv_byte('hCD);
       recv_byte('h42);
@@ -47,7 +48,7 @@ module Top;
       recv_byte('h44);
 
       recv_byte(`COMMAND_WRITE);
-      recv_byte(3);
+      recv_byte(2);
       recv_byte('h0A);
       recv_byte('h10);
       recv_byte('h44);
@@ -55,16 +56,19 @@ module Top;
       recv_byte('h46);
 
       #2 recv_byte(`COMMAND_READ);
-      recv_byte(1);
+      recv_byte(2);
       recv_byte('h0E);
       recv_byte('hCD);
 
-      #2 recv_byte(`COMMAND_READ);
-      recv_byte(1);
+      #15 recv_byte(`COMMAND_READ);
+      recv_byte(2);
       recv_byte('h0A);
       recv_byte('h10);
 
-      #2 $finish;
+      #5 is_transmitting = 1;
+      #5 is_transmitting = 0;
+
+      #15 $finish;
 
     end
 

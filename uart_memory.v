@@ -1,5 +1,8 @@
 `include "uart.v"
 
+// Read test fails for higher baud rates (???)
+`define BAUD_RATE 19200
+
 `define COMMAND_READ 1
 `define COMMAND_WRITE 2
 
@@ -10,7 +13,7 @@ module memory(input wire        clk,
               input wire [7:0]  write_byte,
               output wire [7:0] read_byte);
 
-  parameter size = 'h2000;
+  parameter size = 'h1000;
 
   reg [7:0] mem[0:size-1];
 
@@ -28,6 +31,7 @@ endmodule // memory
 module memory_controller(input wire       clk,
                          input wire       received,
                          input wire [7:0] rx_byte,
+                         input wire       is_transmitting,
                          output reg       transmit,
                          output reg [7:0] tx_byte);
 
@@ -41,16 +45,18 @@ module memory_controller(input wire       clk,
 
   memory mem(clk, read, write, addr, write_byte, read_byte);
 
-  localparam [3:0]
+  localparam [4:0]
     STATE_IDLE = 0,
     STATE_RX_COUNT = 1,
     STATE_RX_ADDR_HI = 2,
     STATE_RX_ADDR_LO = 3,
-    STATE_READ = 4,
-    STATE_WRITE_RX_DATA = 5,
-    STATE_WRITE_ADVANCE = 6;
+    STATE_READ_WAIT = 4,
+    STATE_READ = 5,
+    STATE_READ_ADVANCE = 6,
+    STATE_WRITE_RX_DATA = 7,
+    STATE_WRITE_ADVANCE = 8;
 
-  reg [3:0] state = STATE_IDLE;
+  reg [4:0] state = STATE_IDLE;
 
   always @(posedge clk)
     begin
@@ -90,8 +96,7 @@ module memory_controller(input wire       clk,
             command <= 0;
             case (command)
               `COMMAND_READ: begin
-                state <= STATE_READ;
-                read <= 1;
+                state <= STATE_READ_WAIT;
               end
               `COMMAND_WRITE: begin
                 state <= STATE_WRITE_RX_DATA;
@@ -100,23 +105,32 @@ module memory_controller(input wire       clk,
           end
         end // case: STATE_RX_ADDR
 
+        STATE_READ_WAIT: begin
+          if (!is_transmitting) begin
+            read <= 1;
+            state <= STATE_READ;
+          end
+        end
+
         STATE_READ: begin
-          state <= STATE_IDLE;
           transmit <= 1;
           tx_byte <= read_byte;
+          state <= (count == 0 ? STATE_IDLE : STATE_READ_ADVANCE);
         end
 
         STATE_WRITE_RX_DATA: begin
           if (received) begin
             write <= 1;
             write_byte <= rx_byte;
-            if (count > 1) begin
-              state <= STATE_WRITE_ADVANCE;
-            end else begin
-              state <= STATE_IDLE;
-            end
+            state <= (count == 0 ? STATE_IDLE : STATE_WRITE_ADVANCE);
           end
         end // case: STATE_WRITE_RX_DATA_ADVANCE
+
+        STATE_READ_ADVANCE: begin
+          addr <= addr + 1;
+          count <= count - 1;
+          state <= STATE_READ_WAIT;
+        end
 
         STATE_WRITE_ADVANCE: begin
           addr <= addr + 1;
@@ -145,7 +159,7 @@ module uart_memory(input wire  iCE_CLK,
   wire       is_transmitting;
   wire       recv_error;
 
-  uart #(.baud_rate(115200), .sys_clk_freq(12000000))
+  uart #(.baud_rate(`BAUD_RATE), .sys_clk_freq(12000000))
   uart0(.clk(iCE_CLK),                    // The master clock for this module
         .rst(reset),                      // Synchronous reset
         .rx(RS232_Rx_TTL),                // Incoming serial line
@@ -162,6 +176,7 @@ module uart_memory(input wire  iCE_CLK,
   memory_controller mc(.clk(iCE_CLK),
                        .received(received),
                        .rx_byte(rx_byte),
+                       .is_transmitting(is_transmitting),
                        .transmit(transmit),
                        .tx_byte(tx_byte)
                        );
@@ -173,7 +188,7 @@ module uart_memory(input wire  iCE_CLK,
         count_received <= count_received + 1;
     end
 
-  assign LED0 = is_receiving;
+  assign LED0 = is_transmitting;
   assign LED1 = count_received[0];
   assign LED2 = count_received[1];
   assign LED3 = count_received[2];
