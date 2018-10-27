@@ -29,7 +29,7 @@ module Top;
 
   initial
     begin
-      #55 $finish;
+      #64 $finish;
     end
 
   initial
@@ -38,26 +38,34 @@ module Top;
 
       #2 received = 1; rx_byte = `COMMAND_WRITE;
       #2 received = 0;
-      #2 received = 1; rx_byte = 'hFE;
+      #2 received = 1; rx_byte = 'h0E;
+      #2 received = 0;
+      #2 received = 1; rx_byte = 'hCD;
       #2 received = 0;
       #2 received = 1; rx_byte = 'h42;
       #2 received = 0;
 
       #2 received = 1; rx_byte = `COMMAND_WRITE;
       #2 received = 0;
-      #2 received = 1; rx_byte = 'hAB;
+      #2 received = 1; rx_byte = 'h0A;
+      #2 received = 0;
+      #2 received = 1; rx_byte = 'h10;
       #2 received = 0;
       #2 received = 1; rx_byte = 'h44;
       #2 received = 0;
 
       #4 received = 1; rx_byte = `COMMAND_READ;
       #2 received = 0;
-      #2 received = 1; rx_byte = 'hFE;
+      #2 received = 1; rx_byte = 'h0E;
+      #2 received = 0;
+      #2 received = 1; rx_byte = 'hCD;
       #2 received = 0;
 
       #4 received = 1; rx_byte = `COMMAND_READ;
       #2 received = 0;
-      #2 received = 1; rx_byte = 'hAB;
+      #2 received = 1; rx_byte = 'h0A;
+      #2 received = 0;
+      #2 received = 1; rx_byte = 'h10;
       #2 received = 0;
 
     end

@@ -6,11 +6,13 @@
 module memory(input wire        clk,
               input wire        read,
               input wire        write,
-              input wire [7:0]  addr,
+              input wire [15:0]  addr,
               input wire [7:0]  write_byte,
               output wire [7:0] read_byte);
 
-  reg [7:0] mem[0:255];
+  parameter size = 'h2000;
+
+  reg [7:0] mem[0:size-1];
 
   assign read_byte = read ? mem[addr] : 0;
 
@@ -32,19 +34,20 @@ module memory_controller(input wire       clk,
   reg        read;
   reg        write;
   reg [1:0]  command;
-  reg [7:0]  addr;
+  reg [15:0]  addr;
   reg [7:0]  write_byte;
   wire [7:0] read_byte;
 
   memory mem(clk, read, write, addr, write_byte, read_byte);
 
-  localparam [2:0]
+  localparam [3:0]
     STATE_IDLE = 0,
-    STATE_RX_ADDR = 1,
-    STATE_READ = 2,
-    STATE_WRITE_RX_DATA = 3;
+    STATE_RX_ADDR_HI = 1,
+    STATE_RX_ADDR_LO = 2,
+    STATE_READ = 3,
+    STATE_WRITE_RX_DATA = 4;
 
-  reg [2:0] state = STATE_IDLE;
+  reg [3:0] state = STATE_IDLE;
 
   always @(posedge clk)
     begin
@@ -58,15 +61,22 @@ module memory_controller(input wire       clk,
             case (rx_byte)
               `COMMAND_READ, `COMMAND_WRITE: begin
                 command <= rx_byte;
-                state <= STATE_RX_ADDR;
+                state <= STATE_RX_ADDR_HI;
               end
             endcase
           end
         end
 
-        STATE_RX_ADDR: begin
+        STATE_RX_ADDR_HI: begin
           if (received) begin
-            addr <= rx_byte;
+            addr[15:8] <= rx_byte;
+            state <= STATE_RX_ADDR_LO;
+          end
+        end
+
+        STATE_RX_ADDR_LO: begin
+          if (received) begin
+            addr[7:0] <= rx_byte;
             command <= 0;
             case (command)
               `COMMAND_READ: begin
@@ -115,7 +125,7 @@ module uart_memory(input wire  iCE_CLK,
   wire       is_transmitting;
   wire       recv_error;
 
-  uart #(.baud_rate(9600), .sys_clk_freq(12000000))
+  uart #(.baud_rate(115200), .sys_clk_freq(12000000))
   uart0(.clk(iCE_CLK),                    // The master clock for this module
         .rst(reset),                      // Synchronous reset
         .rx(RS232_Rx_TTL),                // Incoming serial line
