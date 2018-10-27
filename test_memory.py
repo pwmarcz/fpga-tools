@@ -7,23 +7,31 @@ COMMAND_READ = 1
 COMMAND_WRITE = 2
 
 
-def write(ser, addr, b):
-    ser.write([COMMAND_WRITE, addr, b])
+def write(ser, addr, byte):
+    ser.write([COMMAND_WRITE, addr, byte])
 
 
 def read(ser, addr):
     ser.write([COMMAND_READ, addr])
-    b = ser.read()
-    if b is None:
-        return None
-    return ord(b)
+    data = ser.read(1)
+    assert len(data) == 1, 'failed to read'
+    return ord(data)
 
+
+SIZE = 0x100
 
 with serial.Serial('/dev/ttyUSB1', 9600, timeout=1) as ser:
-    write(ser, 0xFE, 42)
-    write(ser, 0xAB, 44)
-    write(ser, 0xCD, read(ser, 0xCD) + 1)
+    print('Writing')
+    for i in range(SIZE):
+        write(ser, i, i & 0xFF)
+        print('.', end='', flush=True)
 
-    print(read(ser, 0xFE))
-    print(read(ser, 0xAB))
-    print(read(ser, 0xCD))
+    print()
+    print('Reading')
+    for i in range(SIZE):
+        b = read(ser, i)
+        assert b == i & 0xFF, 'read error'
+        print('.', end='', flush=True)
+
+    print()
+    print('All OK')
