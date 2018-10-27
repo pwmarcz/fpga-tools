@@ -31,21 +31,24 @@ module memory_controller(input wire       clk,
                          output reg       transmit,
                          output reg [7:0] tx_byte);
 
-  reg        read;
-  reg        write;
-  reg [1:0]  command;
+  reg         read;
+  reg         write;
+  reg [1:0]   command;
   reg [15:0]  addr;
-  reg [7:0]  write_byte;
-  wire [7:0] read_byte;
+  reg [7:0]   count;
+  reg [7:0]   write_byte;
+  wire [7:0]  read_byte;
 
   memory mem(clk, read, write, addr, write_byte, read_byte);
 
   localparam [3:0]
     STATE_IDLE = 0,
-    STATE_RX_ADDR_HI = 1,
-    STATE_RX_ADDR_LO = 2,
-    STATE_READ = 3,
-    STATE_WRITE_RX_DATA = 4;
+    STATE_RX_COUNT = 1,
+    STATE_RX_ADDR_HI = 2,
+    STATE_RX_ADDR_LO = 3,
+    STATE_READ = 4,
+    STATE_WRITE_RX_DATA = 5,
+    STATE_WRITE_ADVANCE = 6;
 
   reg [3:0] state = STATE_IDLE;
 
@@ -61,9 +64,16 @@ module memory_controller(input wire       clk,
             case (rx_byte)
               `COMMAND_READ, `COMMAND_WRITE: begin
                 command <= rx_byte;
-                state <= STATE_RX_ADDR_HI;
+                state <= STATE_RX_COUNT;
               end
             endcase
+          end
+        end
+
+        STATE_RX_COUNT: begin
+          if (received) begin
+            count <= rx_byte;
+            state <= STATE_RX_ADDR_HI;
           end
         end
 
@@ -98,10 +108,20 @@ module memory_controller(input wire       clk,
 
         STATE_WRITE_RX_DATA: begin
           if (received) begin
-            state <= STATE_IDLE;
             write <= 1;
             write_byte <= rx_byte;
+            if (count > 1) begin
+              state <= STATE_WRITE_ADVANCE;
+            end else begin
+              state <= STATE_IDLE;
+            end
           end
+        end // case: STATE_WRITE_RX_DATA_ADVANCE
+
+        STATE_WRITE_ADVANCE: begin
+          addr <= addr + 1;
+          count <= count - 1;
+          state <= STATE_WRITE_RX_DATA;
         end
       endcase // case (state)
     end

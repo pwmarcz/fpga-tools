@@ -26,47 +26,45 @@ module Top;
       forever #1 clock = ~clock;
     end
 
-
-  initial
+  task recv_byte;
+    input [7:0] b;
     begin
-      #64 $finish;
+      #2 received = 1; rx_byte = b;
+      #2 received = 0;
     end
+  endtask // recv_byte
 
   initial
     begin
       received = 0;
 
-      #2 received = 1; rx_byte = `COMMAND_WRITE;
-      #2 received = 0;
-      #2 received = 1; rx_byte = 'h0E;
-      #2 received = 0;
-      #2 received = 1; rx_byte = 'hCD;
-      #2 received = 0;
-      #2 received = 1; rx_byte = 'h42;
-      #2 received = 0;
+      recv_byte(`COMMAND_WRITE);
+      recv_byte(3);
+      recv_byte('h0E);
+      recv_byte('hCD);
+      recv_byte('h42);
+      recv_byte('h43);
+      recv_byte('h44);
 
-      #2 received = 1; rx_byte = `COMMAND_WRITE;
-      #2 received = 0;
-      #2 received = 1; rx_byte = 'h0A;
-      #2 received = 0;
-      #2 received = 1; rx_byte = 'h10;
-      #2 received = 0;
-      #2 received = 1; rx_byte = 'h44;
-      #2 received = 0;
+      recv_byte(`COMMAND_WRITE);
+      recv_byte(3);
+      recv_byte('h0A);
+      recv_byte('h10);
+      recv_byte('h44);
+      recv_byte('h45);
+      recv_byte('h46);
 
-      #4 received = 1; rx_byte = `COMMAND_READ;
-      #2 received = 0;
-      #2 received = 1; rx_byte = 'h0E;
-      #2 received = 0;
-      #2 received = 1; rx_byte = 'hCD;
-      #2 received = 0;
+      #2 recv_byte(`COMMAND_READ);
+      recv_byte(1);
+      recv_byte('h0E);
+      recv_byte('hCD);
 
-      #4 received = 1; rx_byte = `COMMAND_READ;
-      #2 received = 0;
-      #2 received = 1; rx_byte = 'h0A;
-      #2 received = 0;
-      #2 received = 1; rx_byte = 'h10;
-      #2 received = 0;
+      #2 recv_byte(`COMMAND_READ);
+      recv_byte(1);
+      recv_byte('h0A);
+      recv_byte('h10);
+
+      #2 $finish;
 
     end
 
