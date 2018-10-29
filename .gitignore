@@ -1,6 +1,6 @@
 *.out
 *.vcd
 *.blif
-*.txt
+*.asc
 *.out
 *.bin

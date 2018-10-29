@@ -9,11 +9,11 @@ controller_tb.out: uart_memory.v
 %.blif: %.v
 	yosys -q -p "synth_ice40 -blif $@" $<
 
-%.txt: icestick.pcf %.blif
+%.asc: icestick.pcf %.blif
 	arachne-pnr -p icestick.pcf $*.blif -o $@
 
-%.bin: %.txt
-	icepack $*.txt $@
+%.bin: %.asc
+	icepack $*.asc $@
 
 %.vcd: %.out
 	./$<
@@ -35,4 +35,4 @@ run-%: %.out
 
 .PHONY: clean
 clean:
-	rm *.bin *.blif *.txt
+	rm *.bin *.blif *.asc
