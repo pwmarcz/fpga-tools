@@ -1,4 +1,4 @@
-`include "uart_memory.v"
+`include "memory_controller.v"
 
 module Top;
   reg clock;
