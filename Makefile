@@ -1,12 +1,15 @@
 .PHONY: all
 all: flash-uart_hello
 
-memory_tb.out: uart_memory.v
-controller_tb.out: uart_memory.v
+SRCS = $(wildcard *.v)
 
-.PRECIOUS: %.bin %.vcd
+.PRECIOUS: %.bin %.vcd %.d
 
-%.blif: %.v
+%.d: %.v make-deps
+	./make-deps $(@:.d=.blif) $< > $@
+	./make-deps $(@:.d=.out) $< > $@
+
+%.blif: %.v %.d
 	yosys -q -p "synth_ice40 -blif $@" $<
 
 %.asc: icestick.pcf %.blif
@@ -18,7 +21,7 @@ controller_tb.out: uart_memory.v
 %.vcd: %.out
 	./$<
 
-%.out: %.v
+%.out: %.v %.d
 	iverilog $< -o $@
 
 .PHONY: prog-%
@@ -35,4 +38,6 @@ run-%: %.out
 
 .PHONY: clean
 clean:
-	rm *.bin *.blif *.asc
+	rm -f *.bin *.blif *.asc *.out *.d
+
+include $(wildcard *.d)
