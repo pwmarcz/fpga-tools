@@ -1,32 +1,11 @@
 `include "uart.v"
+`include "memory.v"
 
 // Read test fails for higher baud rates (???)
 `define BAUD_RATE 19200
 
 `define COMMAND_READ 1
 `define COMMAND_WRITE 2
-
-module memory(input wire        clk,
-              input wire        read,
-              input wire        write,
-              input wire [15:0]  addr,
-              input wire [7:0]  write_byte,
-              output wire [7:0] read_byte);
-
-  parameter size = 'h1000;
-
-  reg [7:0] mem[0:size-1];
-
-  assign read_byte = read ? mem[addr] : 0;
-
-  always @(posedge clk) begin
-    if (write) begin
-      $display("Storing %H at %H", write_byte, addr);
-      mem[addr] <= write_byte;
-    end
-  end // always @ (posedge clk)
-endmodule // memory
-
 
 module memory_controller(input wire       clk,
                          input wire       received,
