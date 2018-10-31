@@ -13,10 +13,6 @@ module Top;
 
   initial
     begin
-      $monitor($time,
-               " clock = %d, received = %H, rx_byte = %H, transmit = %H, tx_byte = %H",
-               clock, received, rx_byte, transmit, tx_byte);
-
       $dumpfile("controller_tb.vcd");
       $dumpvars;
     end
@@ -34,6 +30,14 @@ module Top;
       #2 received = 0;
     end
   endtask // recv_byte
+
+  always @(posedge clock)
+    begin
+      if (received)
+        $display($time, " uart: recv %H", rx_byte);
+      if (transmit)
+        $display($time, " uart: send %H", tx_byte);
+    end
 
   initial
     begin

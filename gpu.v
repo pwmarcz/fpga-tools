@@ -40,7 +40,6 @@ module gpu(input wire        clk,
 
   always @(posedge clk)
     begin
-      $display("state=%d draw=%d",state,draw);
       case (state)
         STATE_IDLE: begin
           if (draw) begin

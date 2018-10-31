@@ -22,10 +22,10 @@ module memory(input wire        clk,
 
   always @(posedge clk) begin
     if (read) begin
-      $display("Reading %H from %H", read_byte, addr);
+      $display($time, " memory: read  %H (%b) addr %H", read_byte, read_byte, addr);
     end
     if (write) begin
-      $display("Storing %H at %H", write_byte, addr);
+      $display($time, " memory: write %H (%b) addr %H", write_byte, write_byte, addr);
       mem[addr] <= write_byte;
     end
   end // always @ (posedge clk)
