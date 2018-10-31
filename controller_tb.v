@@ -59,6 +59,20 @@ module Top;
       recv_byte('h45);
       recv_byte('h46);
 
+      recv_byte(`COMMAND_WRITE);
+      recv_byte(1);
+      recv_byte('h01);
+      recv_byte('h18);
+      recv_byte('h00);
+      recv_byte('h00);
+
+      recv_byte(`COMMAND_WRITE);
+      recv_byte(1);
+      recv_byte('h01);
+      recv_byte('h58);
+      recv_byte('h00);
+      recv_byte('h00);
+
       #2 recv_byte(`COMMAND_READ);
       recv_byte(2);
       recv_byte('h0E);
@@ -71,6 +85,14 @@ module Top;
 
       #5 is_transmitting = 1;
       #5 is_transmitting = 0;
+      #15;
+
+      recv_byte(`COMMAND_DRAW | 'h20);
+      recv_byte('h03);
+      recv_byte('h0E);
+      recv_byte('hCD);
+
+      #20;
 
       #15 $finish;
 

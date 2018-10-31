@@ -40,9 +40,18 @@ module gpu(input wire        clk,
 
   always @(posedge clk)
     begin
+      if (state == STATE_IDLE) begin
+        mem_read <= 0;
+        mem_write <= 0;
+        mem_addr <= 0;
+        mem_write_byte <= 0;
+      end;
+
       case (state)
         STATE_IDLE: begin
           if (draw) begin
+            $display($time, " gpu: draw x %h y %h lines %h addr %h",
+                     x, y, lines, addr);
             collision <= 0;
             if (x < 64 && y < 32 && lines > 0) begin
               count <= lines;
