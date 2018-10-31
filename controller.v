@@ -3,12 +3,12 @@
 `define COMMAND_READ 1
 `define COMMAND_WRITE 2
 
-module memory_controller(input wire       clk,
-                         input wire       received,
-                         input wire [7:0] rx_byte,
-                         input wire       is_transmitting,
-                         output reg       transmit,
-                         output reg [7:0] tx_byte);
+module controller(input wire       clk,
+                  input wire       received,
+                  input wire [7:0] rx_byte,
+                  input wire       is_transmitting,
+                  output reg       transmit,
+                  output reg [7:0] tx_byte);
 
   reg         read;
   reg         write;

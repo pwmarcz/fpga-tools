@@ -1,5 +1,5 @@
 `include "uart.v"
-`include "memory_controller.v"
+`include "controller.v"
 
 // Read test fails for higher baud rates (???)
 `define BAUD_RATE 19200
@@ -36,13 +36,13 @@ module uart_memory(input wire  iCE_CLK,
         .recv_error(recv_error)           // Indicates error in receiving packet.
         );
 
-  memory_controller mc(.clk(iCE_CLK),
-                       .received(received),
-                       .rx_byte(rx_byte),
-                       .is_transmitting(is_transmitting),
-                       .transmit(transmit),
-                       .tx_byte(tx_byte)
-                       );
+  controller mc(.clk(iCE_CLK),
+                .received(received),
+                .rx_byte(rx_byte),
+                .is_transmitting(is_transmitting),
+                .transmit(transmit),
+                .tx_byte(tx_byte)
+                );
 
   reg [3:0]  count_received = 0;
   always @(posedge iCE_CLK)

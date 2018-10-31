@@ -1,4 +1,4 @@
-`include "memory_controller.v"
+`include "controller.v"
 
 module Top;
   reg clock;
@@ -9,7 +9,7 @@ module Top;
   wire transmit;
   wire [7:0] tx_byte;
 
-  memory_controller mc(clock, received, rx_byte, is_transmitting, transmit, tx_byte);
+  controller mc(clock, received, rx_byte, is_transmitting, transmit, tx_byte);
 
   initial
     begin
