@@ -105,7 +105,7 @@ module gpu(input wire        clk,
         STATE_STORE_RIGHT: begin
           if (count > 1) begin
             count <= count - 1;
-            screen_addr <= screen_addr + 63;
+            screen_addr <= screen_addr + 7;
             mem_addr <= sprite_addr + 1;
             sprite_addr <= sprite_addr + 1;
             mem_read <= 1;
