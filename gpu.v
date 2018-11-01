@@ -77,6 +77,7 @@ module gpu(input wire        clk,
 
         STATE_LOAD_LEFT: begin
           if (!mem_read) begin
+            mem_addr <= screen_addr;
             mem_write <= 1;
             collision <= collision | |(mem_read_byte & left);
             mem_write_byte <= mem_read_byte ^ left;
@@ -93,6 +94,7 @@ module gpu(input wire        clk,
 
         STATE_LOAD_RIGHT: begin
           if (!mem_read) begin
+            mem_addr <= screen_addr;
             mem_write <= 1;
             collision <= collision | |(mem_read_byte & right);
             mem_write_byte <= mem_read_byte ^ right;
