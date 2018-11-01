@@ -26,7 +26,7 @@ module Top;
   task recv_byte;
     input [7:0] b;
     begin
-      #2 received = 1; rx_byte = b;
+      #4 received = 1; rx_byte = b;
       #2 received = 0;
     end
   endtask // recv_byte
@@ -78,7 +78,7 @@ module Top;
       recv_byte('h0E);
       recv_byte('hCD);
 
-      #15 recv_byte(`COMMAND_READ);
+      #20 recv_byte(`COMMAND_READ);
       recv_byte(2);
       recv_byte('h0A);
       recv_byte('h10);

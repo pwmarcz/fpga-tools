@@ -40,12 +40,10 @@ module gpu(input wire        clk,
 
   always @(posedge clk)
     begin
-      if (state == STATE_IDLE) begin
-        mem_read <= 0;
-        mem_write <= 0;
-        mem_addr <= 0;
-        mem_write_byte <= 0;
-      end;
+      mem_read <= 0;
+      mem_write <= 0;
+      mem_addr <= 0;
+      mem_write_byte <= 0;
 
       case (state)
         STATE_IDLE: begin
@@ -68,14 +66,15 @@ module gpu(input wire        clk,
         end // case: STATE_IDLE
 
         STATE_LOAD_SPRITE: begin
-          left <= mem_read_byte >> shift;
-          right <= erase_right ? 0 : mem_read_byte << (8 - shift);
-          mem_addr <= screen_addr;
-          state <= STATE_LOAD_LEFT;
+          if (!mem_read) begin
+            left <= mem_read_byte >> shift;
+            right <= erase_right ? 0 : mem_read_byte << (8 - shift);
+            mem_addr <= screen_addr;
+            state <= STATE_LOAD_LEFT;
+          end
         end
 
         STATE_LOAD_LEFT: begin
-          mem_read <= 0;
           mem_write <= 1;
           collision <= collision | |(mem_read_byte & left);
           mem_write_byte <= mem_read_byte ^ left;
@@ -84,22 +83,21 @@ module gpu(input wire        clk,
 
         STATE_STORE_LEFT: begin
           mem_read <= 1;
-          mem_write <= 0;
           mem_addr <= screen_addr + 1;
           screen_addr <= screen_addr + 1;
           state <= STATE_LOAD_RIGHT;
         end
 
         STATE_LOAD_RIGHT: begin
-          mem_read <= 0;
-          mem_write <= 1;
-          collision <= collision | |(mem_read_byte & right);
-          mem_write_byte <= mem_read_byte ^ right;
-          state <= STATE_STORE_RIGHT;
+          if (!mem_read) begin
+            mem_write <= 1;
+            collision <= collision | |(mem_read_byte & right);
+            mem_write_byte <= mem_read_byte ^ right;
+            state <= STATE_STORE_RIGHT;
+          end
         end
 
         STATE_STORE_RIGHT: begin
-          mem_write <= 0;
           if (count > 1) begin
             count <= count - 1;
             screen_addr <= screen_addr + 63;

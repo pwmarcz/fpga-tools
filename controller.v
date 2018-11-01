@@ -95,6 +95,8 @@ module controller(input wire       clk,
             if (command_idx < 3) begin
               command_idx <= command_idx + 1;
             end else begin
+              $display($time, " controller: command %h %h %h %h",
+                       command_bytes[0], command_bytes[1], command_bytes[2], command_bytes[3]);
               case (command)
                 `COMMAND_READ: begin
                   addr <= {command_bytes[2], command_bytes[3]};
@@ -128,9 +130,11 @@ module controller(input wire       clk,
         end
 
         STATE_READ: begin
-          transmit <= 1;
-          tx_byte <= read_byte;
-          state <= (count == 0 ? STATE_IDLE : STATE_READ_ADVANCE);
+          if (!read) begin
+            transmit <= 1;
+            tx_byte <= read_byte;
+            state <= (count == 0 ? STATE_IDLE : STATE_READ_ADVANCE);
+          end
         end
 
         STATE_WRITE_RX_DATA: begin
