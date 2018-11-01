@@ -78,6 +78,7 @@ module controller(input wire       clk,
       write <= 0;
       transmit <= 0;
       gpu_draw <= 0;
+      write_byte <= 0;
 
       case (state)
         STATE_IDLE: begin
