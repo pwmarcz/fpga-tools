@@ -3,14 +3,13 @@ module memory(input wire        clk,
               input wire        write,
               input wire [15:0]  addr,
               input wire [7:0]  write_byte,
-              output wire [7:0] read_byte);
+              output reg [7:0] read_byte);
 
   parameter size = 'h1000;
   parameter initialize = 0;
 
   reg [7:0] mem[0:size-1];
 
-  assign read_byte = read ? mem[addr] : 0;
   integer   i;
 
   initial
@@ -22,11 +21,12 @@ module memory(input wire        clk,
 
   always @(posedge clk) begin
     if (read) begin
-      $display($time, " memory: read  %H (%b) addr %H", read_byte, read_byte, addr);
+      read_byte <= mem[addr];
+      $display($time, " memory: read  %H (%b) addr %H", mem[addr], mem[addr], addr);
     end
     if (write) begin
-      $display($time, " memory: write %H (%b) addr %H", write_byte, write_byte, addr);
       mem[addr] <= write_byte;
+      $display($time, " memory: write %H (%b) addr %H", write_byte, write_byte, addr);
     end
   end // always @ (posedge clk)
 endmodule // memory
