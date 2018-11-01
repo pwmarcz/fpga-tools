@@ -70,15 +70,18 @@ module gpu(input wire        clk,
             left <= mem_read_byte >> shift;
             right <= erase_right ? 0 : mem_read_byte << (8 - shift);
             mem_addr <= screen_addr;
+            mem_read <= 1;
             state <= STATE_LOAD_LEFT;
           end
         end
 
         STATE_LOAD_LEFT: begin
-          mem_write <= 1;
-          collision <= collision | |(mem_read_byte & left);
-          mem_write_byte <= mem_read_byte ^ left;
-          state <= STATE_STORE_LEFT;
+          if (!mem_read) begin
+            mem_write <= 1;
+            collision <= collision | |(mem_read_byte & left);
+            mem_write_byte <= mem_read_byte ^ left;
+            state <= STATE_STORE_LEFT;
+          end
         end
 
         STATE_STORE_LEFT: begin
