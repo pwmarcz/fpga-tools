@@ -98,9 +98,16 @@ module display(input wire clk,
 
   reg [3:0] state = STATE_RESET;
 
+  reg [7:0] font[0:96*8-1];
+  reg [10:0] font_idx;
+  reg        font_idx_ready;
+  wire [7:0] char = (page_idx * 16 + column_idx / 8) % 96;
+
   integer i;
 
   initial begin
+    $readmemh("font.mem", font);
+
     dspi_cmd = `CMD_RESET;
 
     i = -1;
@@ -166,21 +173,26 @@ module display(input wire clk,
             state <= STATE_REFRESH_DATA;
             page_idx <= 0;
             column_idx <= 0;
+            font_idx_ready <= 0;
           end
         end
         STATE_REFRESH_DATA: begin
-          dspi_cmd <= `CMD_SEND_DATA;
-          if ((page_idx % 2 == 0) ^ ((column_idx & 8) == 0))
-            dspi_byte <= 'hFF;
-          else
-            dspi_byte <= 0;
-          column_idx <= column_idx + 1;
-          if (column_idx == 127) begin
-            page_idx <= page_idx + 1;
-            if (page_idx == 7) begin
-              state <= STATE_REFRESH_BEGIN;
-              command_idx <= 0;
+          if (font_idx_ready) begin
+            font_idx_ready <= 0;
+            dspi_cmd <= `CMD_SEND_DATA;
+            dspi_byte <= font[font_idx];
+
+            column_idx <= column_idx + 1;
+            if (column_idx == 127) begin
+              page_idx <= page_idx + 1;
+              if (page_idx == 7) begin
+                state <= STATE_REFRESH_BEGIN;
+                command_idx <= 0;
+              end
             end
+          end else begin // if (font_idx_ready)
+            font_idx <= char * 8 + column_idx % 8;
+            font_idx_ready <= 1;
           end
         end
       endcase // case (state)

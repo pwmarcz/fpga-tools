@@ -1,6 +1,8 @@
 .PHONY: all
 all: flash-uart_hello
 
+display.blif: font.mem
+
 SRCS = $(wildcard *.v)
 
 .PRECIOUS: %.bin %.vcd %.d
