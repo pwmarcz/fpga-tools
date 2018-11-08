@@ -170,7 +170,7 @@ module display(input wire clk,
         end
         STATE_REFRESH_DATA: begin
           dspi_cmd <= `CMD_SEND_DATA;
-          if (page_idx == 0)
+          if ((page_idx % 2 == 0) ^ ((column_idx & 8) == 0))
             dspi_byte <= 'hFF;
           else
             dspi_byte <= 0;
@@ -187,7 +187,6 @@ module display(input wire clk,
     end // if (dspi_ready)
   end
 endmodule // display
-
 
 module display_demo(input wire  iCE_CLK,
                     output wire PIO1_02,
