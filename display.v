@@ -75,11 +75,15 @@ module display_spi(input wire clk,
   end
 endmodule // display_spi
 
-
 module display(input wire clk,
-               input wire dspi_ready,
+               input wire       dspi_ready,
                output reg [2:0] dspi_cmd,
-               output reg [7:0] dspi_byte);
+               output reg [7:0] dspi_byte,
+               output reg       d_read,
+               output reg [2:0] d_page_idx,
+               output reg [6:0] d_column_idx,
+               input wire [7:0] d_data,
+               input wire       d_data_ready);
 
   localparam MAX_INIT_COMMAND = 24;
   localparam MAX_REFRESH_COMMAND = 5;
@@ -93,21 +97,12 @@ module display(input wire clk,
   reg [7:0] init_commands[0:MAX_INIT_COMMAND];
   reg [7:0] refresh_commands[0:MAX_REFRESH_COMMAND];
   reg [8:0] command_idx = 0;
-  reg [2:0] page_idx = 0; // 0..7
-  reg [6:0] column_idx = 0; // 0..127
 
   reg [3:0] state = STATE_RESET;
-
-  reg [7:0] font[0:96*8-1];
-  reg [10:0] font_idx;
-  reg        font_idx_ready;
-  wire [7:0] char = (page_idx * 16 + column_idx / 8) % 96;
 
   integer i;
 
   initial begin
-    $readmemh("font.mem", font);
-
     dspi_cmd = `CMD_RESET;
 
     i = -1;
@@ -171,34 +166,81 @@ module display(input wire clk,
             command_idx <= command_idx + 1;
           end else begin
             state <= STATE_REFRESH_DATA;
-            page_idx <= 0;
-            column_idx <= 0;
-            font_idx_ready <= 0;
+            d_page_idx <= 0;
+            d_column_idx <= 0;
+            d_read <= 1;
           end
         end
         STATE_REFRESH_DATA: begin
-          if (font_idx_ready) begin
-            font_idx_ready <= 0;
+          d_read <= 0;
+          if (d_data_ready) begin
             dspi_cmd <= `CMD_SEND_DATA;
-            dspi_byte <= font[font_idx];
+            dspi_byte <= d_data;
 
-            column_idx <= column_idx + 1;
-            if (column_idx == 127) begin
-              page_idx <= page_idx + 1;
-              if (page_idx == 7) begin
+            d_read <= 1;
+            d_column_idx <= d_column_idx + 1;
+            if (d_column_idx == 127) begin
+              d_page_idx <= d_page_idx + 1;
+              if (d_page_idx == 7) begin
+                d_read <= 0;
                 state <= STATE_REFRESH_BEGIN;
                 command_idx <= 0;
               end
             end
-          end else begin // if (font_idx_ready)
-            font_idx <= char * 8 + column_idx % 8;
-            font_idx_ready <= 1;
           end
         end
       endcase // case (state)
     end // if (dspi_ready)
   end
 endmodule // display
+
+module text_display(input wire       clk,
+                    input wire       d_read,
+                    input wire [2:0] d_page_idx,
+                    input wire [6:0] d_column_idx,
+                    output reg [7:0] d_data,
+                    output reg       d_data_ready);
+
+  reg [7:0]  font[0:128*8-1];
+  reg [10:0] font_idx;
+  reg        font_idx_ready = 0;
+
+  reg [7:0]  text[0:16*8-1];
+  reg [6:0]  text_idx;
+  reg        text_idx_ready = 0;
+
+  initial begin
+    $readmemh("font.mem", font);
+    d_data_ready <= 0;
+    text[0] <= "H";
+    text[1] <= "e";
+    text[2] <= "l";
+    text[3] <= "l";
+    text[4] <= "o";
+    text[5] <= " ";
+    text[6] <= "W";
+    text[7] <= "o";
+    text[8] <= "r";
+    text[9] <= "l";
+    text[10] <= "d";
+  end
+
+  always @(posedge clk) begin
+    d_data_ready <= 0;
+    text_idx_ready <= 0;
+    font_idx_ready <= 0;
+    if (d_read) begin
+      text_idx <= d_page_idx * 16 + d_column_idx / 8;
+      text_idx_ready <= 1;
+    end else if (text_idx_ready) begin
+      font_idx <= (text[text_idx] - 'h20) * 8 + d_column_idx % 8;
+      font_idx_ready <= 1;
+    end else if (font_idx_ready) begin
+      d_data <= font[font_idx];
+      d_data_ready <= 1;
+    end
+  end
+endmodule
 
 module display_demo(input wire  iCE_CLK,
                     output wire PIO1_02,
@@ -216,6 +258,12 @@ module display_demo(input wire  iCE_CLK,
   wire [2:0] dspi_cmd;
   wire [7:0] dspi_byte;
 
+  wire       d_read;
+  wire [2:0] d_page_idx;
+  wire [6:0] d_column_idx;
+  wire [7:0] d_data;
+  wire       d_data_ready;
+
   display_spi dspi(.clk(iCE_CLK),
                    .dspi_ready(dspi_ready),
                    .dspi_cmd(dspi_cmd),
@@ -229,7 +277,19 @@ module display_demo(input wire  iCE_CLK,
   display d(.clk(iCE_CLK),
             .dspi_ready(dspi_ready),
             .dspi_cmd(dspi_cmd),
-            .dspi_byte(dspi_byte));
+            .dspi_byte(dspi_byte),
+            .d_read(d_read),
+            .d_page_idx(d_page_idx),
+            .d_column_idx(d_column_idx),
+            .d_data(d_data),
+            .d_data_ready(d_data_ready));
+
+  text_display td(.clk(iCE_CLK),
+                  .d_read(d_read),
+                  .d_page_idx(d_page_idx),
+                  .d_column_idx(d_column_idx),
+                  .d_data(d_data),
+                  .d_data_ready(d_data_ready));
 
   assign LED0 = 0;
   assign LED1 = 0;
