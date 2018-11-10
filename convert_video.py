@@ -11,12 +11,13 @@ import base64
 import ffmpeg
 
 width = 128
-height = 96
+height = 64
 
 out, _ = (
     ffmpeg
     .input('bad_apple.webm')
-    .filter('scale', width, height)
+    .filter('scale', width, -1)
+    .filter('crop', width, height)
     .output('pipe:', format='rawvideo', pix_fmt='gray')
     .run(capture_stdout=True)
 )
