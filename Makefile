@@ -3,13 +3,11 @@ all: flash-uart_hello
 
 display.blif: font.mem
 
-SRCS = $(wildcard *.v)
-
 .PRECIOUS: %.bin %.vcd %.d
 
 %.d: %.v make-deps
 	./make-deps $(@:.d=.blif) $< > $@
-	./make-deps $(@:.d=.out) $< > $@
+	./make-deps $(@:.d=.out) $< >> $@
 
 %.blif: %.v %.d
 	yosys -q -p "synth_ice40 -blif $@" $<
@@ -26,7 +24,7 @@ SRCS = $(wildcard *.v)
 %.out: %.v %.d
 	iverilog $< -o $@
 
-.PHONY: prog-%
+.PHONY: flash-%
 flash-%: %.bin
 	iceprog $<
 
