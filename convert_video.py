@@ -5,7 +5,7 @@
 # pip3 install --user ffmpeg-python
 #
 # youtube-dl ...
-# python3 convert_video.py < bad_apple.webm > bad_apple.bin
+# python3 convert_video.py < bad_apple.webm > bad_apple.raw
 
 import base64
 import ffmpeg
