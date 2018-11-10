@@ -92,11 +92,13 @@ module display(input wire clk,
     STATE_INIT = 1,
     STATE_IDLE = 2,
     STATE_REFRESH_BEGIN = 3,
-    STATE_REFRESH_DATA = 4;
+    STATE_REFRESH_DATA = 4,
+    STATE_ADVANCE = 5;
 
   reg [7:0] init_commands[0:MAX_INIT_COMMAND];
   reg [7:0] refresh_commands[0:MAX_REFRESH_COMMAND];
-  reg [8:0] command_idx = 0;
+  reg [8:0] init_command_idx = 0;
+  reg [8:0] refresh_command_idx = 0;
 
   reg [3:0] state = STATE_RESET;
 
@@ -143,27 +145,32 @@ module display(input wire clk,
 
   always @(posedge clk) begin
     dspi_cmd <= `CMD_NONE;
-    if (dspi_ready) begin
-      case (state)
-        STATE_RESET: begin
+    case (state)
+      STATE_RESET: begin
+        if (dspi_ready) begin
+          dspi_cmd <= `CMD_RESET;
           state <= STATE_INIT;
         end
-        STATE_INIT: begin
+      end
+      STATE_INIT: begin
+        if (dspi_ready) begin
           dspi_cmd <= `CMD_SEND_COMMAND;
-          dspi_byte <= init_commands[command_idx];
+          dspi_byte <= init_commands[init_command_idx];
 
-          if (command_idx < MAX_INIT_COMMAND) begin
-            command_idx <= command_idx + 1;
+          if (init_command_idx < MAX_INIT_COMMAND) begin
+            init_command_idx <= init_command_idx + 1;
           end else begin
             state <= STATE_REFRESH_BEGIN;
-            command_idx <= 0;
+            refresh_command_idx <= 0;
           end
         end
-        STATE_REFRESH_BEGIN: begin
-          dspi_cmd <= `CMD_SEND_COMMAND;
-          dspi_byte <= refresh_commands[command_idx];
-          if (command_idx < MAX_REFRESH_COMMAND) begin
-            command_idx <= command_idx + 1;
+      end
+      STATE_REFRESH_BEGIN: begin
+        if (dspi_ready) begin
+          if (refresh_command_idx <= MAX_REFRESH_COMMAND) begin
+            dspi_cmd <= `CMD_SEND_COMMAND;
+            dspi_byte <= refresh_commands[refresh_command_idx];
+            refresh_command_idx <= refresh_command_idx + 1;
           end else begin
             state <= STATE_REFRESH_DATA;
             d_page_idx <= 0;
@@ -171,25 +178,30 @@ module display(input wire clk,
             d_read <= 1;
           end
         end
-        STATE_REFRESH_DATA: begin
-          d_read <= 0;
-          if (d_data_ready) begin
-            dspi_cmd <= `CMD_SEND_DATA;
-            dspi_byte <= d_data;
-
-            d_read <= 1;
-            d_column_idx <= d_column_idx + 1;
-            if (d_column_idx == 127) begin
-              d_page_idx <= d_page_idx + 1;
-              if (d_page_idx == 7) begin
-                d_read <= 0;
-                state <= STATE_REFRESH_BEGIN;
-                command_idx <= 0;
-              end
+      end
+      STATE_REFRESH_DATA: begin
+        d_read <= 0;
+        if (d_data_ready) begin
+          dspi_cmd <= `CMD_SEND_DATA;
+          dspi_byte <= d_data;
+          state <= STATE_ADVANCE;
+        end
+      end
+      STATE_ADVANCE: begin
+        if (dspi_ready) begin
+          d_read <= 1;
+          state <= STATE_REFRESH_DATA;
+          d_column_idx <= d_column_idx + 1;
+          if (d_column_idx == 127) begin
+            d_page_idx <= d_page_idx + 1;
+            if (d_page_idx == 7) begin
+              d_read <= 0;
+              state <= STATE_REFRESH_BEGIN;
+              refresh_command_idx <= 0;
             end
           end
-        end
-      endcase // case (state)
-    end // if (dspi_ready)
+        end // if (dspi_ready)
+      end
+    endcase // case (state)
   end
 endmodule // display

@@ -1,7 +1,7 @@
 `include "uart.v"
 `include "display.v"
 
-`define BAUD_RATE 19200
+`define BAUD_RATE 115300
 
 module uart_display(input wire       clk,
                     input wire       d_read,
@@ -18,11 +18,29 @@ module uart_display(input wire       clk,
   reg [9:0] data_write_idx = 0;
   reg [9:0] data_read_idx = 0;
 
+  reg byte_num = 0;
+  reg [7:0] data_count = 0;
+  reg [7:0] data_byte;
+
   always @(posedge clk) begin
     if (uart_received) begin
-      data[data_write_idx] <= uart_rx_byte;
+      if (byte_num == 0) begin
+        data_count <= uart_rx_byte;
+        byte_num <= 1;
+      end else begin
+        data_byte <= uart_rx_byte;
+        data[data_write_idx] <= uart_rx_byte;
+        data_write_idx <= (data_write_idx + 1) % DISPLAY_SIZE;
+        byte_num <= 0;
+      end
+    end // if (uart_received)
+
+    if (byte_num == 0 && data_count > 0) begin
+      data[data_write_idx] <= data_byte;
       data_write_idx <= (data_write_idx + 1) % DISPLAY_SIZE;
+      data_count <= data_count - 1;
     end
+
     if (d_read) begin
       d_data <= data[data_read_idx];
       d_data_ready <= 1;
@@ -94,4 +112,5 @@ module display_demo(input wire  iCE_CLK,
                   .d_data_ready(d_data_ready),
                   .uart_received(uart_received),
                   .uart_rx_byte(uart_rx_byte));
+
 endmodule
