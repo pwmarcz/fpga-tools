@@ -54,12 +54,7 @@ module display_demo(input wire  iCE_CLK,
                     output wire PIO1_03,
                     output wire PIO1_04,
                     output wire PIO1_05,
-                    output wire PIO1_06,
-                    output wire LED0,
-	            output wire LED1,
-	            output wire LED2,
-	            output wire LED3,
-                    output wire LED4);
+                    output wire PIO1_06);
 
   wire dspi_ready;
   wire [2:0] dspi_cmd;
@@ -97,10 +92,4 @@ module display_demo(input wire  iCE_CLK,
                   .d_column_idx(d_column_idx),
                   .d_data(d_data),
                   .d_data_ready(d_data_ready));
-
-  assign LED0 = 0;
-  assign LED1 = 0;
-  assign LED2 = 0;
-  assign LED3 = 0;
-  assign LED4 = 0;
 endmodule
