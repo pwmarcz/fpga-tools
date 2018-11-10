@@ -39,7 +39,7 @@ def draw(ser, sprite_addr, lines, x, y):
 def test_memory():
     buf = [i % 254 for i in range(SIZE)]
 
-    with serial.Serial('/dev/ttyUSB1', 19200, timeout=10) as ser:
+    with serial.Serial('/dev/ttyUSB1', BAUD_RATE, timeout=10) as ser:
         print('Writing')
         for i in range(0, SIZE, CHUNK_SIZE):
             write(ser, i, buf[i:i + CHUNK_SIZE])
