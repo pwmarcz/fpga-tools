@@ -85,8 +85,9 @@ module display(input wire clk,
                input wire [7:0] d_data,
                input wire       d_data_ready);
 
-  localparam MAX_INIT_COMMAND = 24;
-  localparam MAX_REFRESH_COMMAND = 5;
+  localparam N_INIT_COMMANDS = 25;
+  localparam N_REFRESH_COMMANDS = 6;
+
   localparam
     STATE_RESET = 0,
     STATE_INIT = 1,
@@ -95,10 +96,10 @@ module display(input wire clk,
     STATE_REFRESH_DATA = 4,
     STATE_ADVANCE = 5;
 
-  reg [7:0] init_commands[0:MAX_INIT_COMMAND];
-  reg [7:0] refresh_commands[0:MAX_REFRESH_COMMAND];
-  reg [8:0] init_command_idx = 0;
-  reg [8:0] refresh_command_idx = 0;
+  reg [7:0] commands[0:N_INIT_COMMANDS+N_REFRESH_COMMANDS-1];
+  reg [8:0] command_idx = 0;
+  reg [7:0] command;
+  reg       send_command = 0;
 
   reg [3:0] state = STATE_RESET;
 
@@ -108,100 +109,106 @@ module display(input wire clk,
     dspi_cmd = `CMD_RESET;
 
     i = -1;
-    i++; init_commands[i] <= `SSD1306_DISPLAYOFF;
-    i++; init_commands[i] <= `SSD1306_SETDISPLAYCLOCKDIV;
-    i++; init_commands[i] <= 'h80;
-    i++; init_commands[i] <= `SSD1306_SETMULTIPLEX;
-    i++; init_commands[i] <= 'h3F;
-    i++; init_commands[i] <= `SSD1306_SETDISPLAYOFFSET;
-    i++; init_commands[i] <= 'h00;
-    i++; init_commands[i] <= `SSD1306_SETSTARTLINE | 'h00;
-    i++; init_commands[i] <= `SSD1306_CHARGEPUMP;
-    i++; init_commands[i] <= 'h14;
-    i++; init_commands[i] <= `SSD1306_MEMORYMODE;
-    i++; init_commands[i] <= 'h00;
-    i++; init_commands[i] <= `SSD1306_SEGREMAP | 'h01;
-    i++; init_commands[i] <= `SSD1306_COMSCANDEC;
-    i++; init_commands[i] <= `SSD1306_SETCOMPINS;
-    i++; init_commands[i] <= 'h12;
-    i++; init_commands[i] <= `SSD1306_SETCONTRAST;
-    i++; init_commands[i] <= 'h70;
-    i++; init_commands[i] <= `SSD1306_SETPRECHARGE;
-    i++; init_commands[i] <= 'hF1;
-    i++; init_commands[i] <= `SSD1306_SETVCOMDETECT;
-    i++; init_commands[i] <= 'h40;
-    i++; init_commands[i] <= `SSD1306_DISPLAYALLON_RESUME;
-    i++; init_commands[i] <= `SSD1306_NORMALDISPLAY;
-    i++; init_commands[i] <= `SSD1306_DISPLAYON;
 
-    i = -1;
-    i++; refresh_commands[i] <= `SSD1306_COLUMNADDR;
-    i++; refresh_commands[i] <= 0;
-    i++; refresh_commands[i] <= 127;
-    i++; refresh_commands[i] <= `SSD1306_PAGEADDR;
-    i++; refresh_commands[i] <= 0;
-    i++; refresh_commands[i] <= 7;
+    // Init commands
+    i++; commands[i] <= `SSD1306_DISPLAYOFF;
+    i++; commands[i] <= `SSD1306_SETDISPLAYCLOCKDIV;
+    i++; commands[i] <= 'h80;
+    i++; commands[i] <= `SSD1306_SETMULTIPLEX;
+    i++; commands[i] <= 'h3F;
+    i++; commands[i] <= `SSD1306_SETDISPLAYOFFSET;
+    i++; commands[i] <= 'h00;
+    i++; commands[i] <= `SSD1306_SETSTARTLINE | 'h00;
+    i++; commands[i] <= `SSD1306_CHARGEPUMP;
+    i++; commands[i] <= 'h14;
+    i++; commands[i] <= `SSD1306_MEMORYMODE;
+    i++; commands[i] <= 'h00;
+    i++; commands[i] <= `SSD1306_SEGREMAP | 'h01;
+    i++; commands[i] <= `SSD1306_COMSCANDEC;
+    i++; commands[i] <= `SSD1306_SETCOMPINS;
+    i++; commands[i] <= 'h12;
+    i++; commands[i] <= `SSD1306_SETCONTRAST;
+    i++; commands[i] <= 'h70;
+    i++; commands[i] <= `SSD1306_SETPRECHARGE;
+    i++; commands[i] <= 'hF1;
+    i++; commands[i] <= `SSD1306_SETVCOMDETECT;
+    i++; commands[i] <= 'h40;
+    i++; commands[i] <= `SSD1306_DISPLAYALLON_RESUME;
+    i++; commands[i] <= `SSD1306_NORMALDISPLAY;
+    i++; commands[i] <= `SSD1306_DISPLAYON;
+
+    // Refresh commands
+    i++; commands[i] <= `SSD1306_COLUMNADDR;
+    i++; commands[i] <= 0;
+    i++; commands[i] <= 127;
+    i++; commands[i] <= `SSD1306_PAGEADDR;
+    i++; commands[i] <= 0;
+    i++; commands[i] <= 7;
   end
 
   always @(posedge clk) begin
-    dspi_cmd <= `CMD_NONE;
-    case (state)
-      STATE_RESET: begin
-        if (dspi_ready) begin
-          dspi_cmd <= `CMD_RESET;
-          state <= STATE_INIT;
+    command <= commands[command_idx];
+    if (send_command) begin
+      send_command <= 0;
+      dspi_cmd <= `CMD_SEND_COMMAND;
+      dspi_byte <= command;
+    end else begin
+      dspi_cmd <= `CMD_NONE;
+      case (state)
+        STATE_RESET: begin
+          if (dspi_ready) begin
+            dspi_cmd <= `CMD_RESET;
+            state <= STATE_INIT;
+            command_idx <= 0;
+          end
         end
-      end
-      STATE_INIT: begin
-        if (dspi_ready) begin
-          dspi_cmd <= `CMD_SEND_COMMAND;
-          dspi_byte <= init_commands[init_command_idx];
+        STATE_INIT: begin
+          if (dspi_ready) begin
+            send_command <= 1;
 
-          if (init_command_idx < MAX_INIT_COMMAND) begin
-            init_command_idx <= init_command_idx + 1;
-          end else begin
-            state <= STATE_REFRESH_BEGIN;
-            refresh_command_idx <= 0;
-          end
-        end
-      end
-      STATE_REFRESH_BEGIN: begin
-        if (dspi_ready) begin
-          if (refresh_command_idx <= MAX_REFRESH_COMMAND) begin
-            dspi_cmd <= `CMD_SEND_COMMAND;
-            dspi_byte <= refresh_commands[refresh_command_idx];
-            refresh_command_idx <= refresh_command_idx + 1;
-          end else begin
-            state <= STATE_REFRESH_DATA;
-            d_page_idx <= 0;
-            d_column_idx <= 0;
-            d_read <= 1;
-          end
-        end
-      end
-      STATE_REFRESH_DATA: begin
-        d_read <= 0;
-        if (d_data_ready) begin
-          dspi_cmd <= `CMD_SEND_DATA;
-          dspi_byte <= d_data;
-          state <= STATE_ADVANCE;
-        end
-      end
-      STATE_ADVANCE: begin
-        if (dspi_ready) begin
-          d_read <= 1;
-          state <= STATE_REFRESH_DATA;
-          d_column_idx <= d_column_idx + 1;
-          if (d_column_idx == 127) begin
-            d_page_idx <= d_page_idx + 1;
-            if (d_page_idx == 7) begin
-              d_read <= 0;
+            command_idx <= command_idx + 1;
+            if (command_idx+1 == N_INIT_COMMANDS) begin
               state <= STATE_REFRESH_BEGIN;
-              refresh_command_idx <= 0;
             end
           end
-        end // if (dspi_ready)
-      end
-    endcase // case (state)
+        end
+        STATE_REFRESH_BEGIN: begin
+          if (dspi_ready) begin
+            if (command_idx < N_INIT_COMMANDS + N_REFRESH_COMMANDS) begin
+              send_command <= 1;
+              command_idx <= command_idx + 1;
+            end else begin
+              state <= STATE_REFRESH_DATA;
+              d_page_idx <= 0;
+              d_column_idx <= 0;
+              d_read <= 1;
+            end
+          end
+        end
+        STATE_REFRESH_DATA: begin
+          d_read <= 0;
+          if (d_data_ready) begin
+            dspi_cmd <= `CMD_SEND_DATA;
+            dspi_byte <= d_data;
+            state <= STATE_ADVANCE;
+          end
+        end
+        STATE_ADVANCE: begin
+          if (dspi_ready) begin
+            d_read <= 1;
+            state <= STATE_REFRESH_DATA;
+            d_column_idx <= d_column_idx + 1;
+            if (d_column_idx == 127) begin
+              d_page_idx <= d_page_idx + 1;
+              if (d_page_idx == 7) begin
+                d_read <= 0;
+                state <= STATE_REFRESH_BEGIN;
+                command_idx <= N_INIT_COMMANDS;
+              end
+            end
+          end // if (dspi_ready)
+        end
+      endcase // case (state)
+    end
   end
 endmodule // display
