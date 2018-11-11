@@ -11,11 +11,12 @@ module display_spi(input wire clk,
 
                    output wire      dspi_ready,
                    output reg       spi_din,
-                   output reg       spi_clk,
+                   output wire      spi_clk,
                    output reg       spi_cs,
                    output reg       spi_dc,
                    output reg       spi_rst);
-  reg [4:0] divider;
+  assign spi_clk = clk;
+
   reg [7:0] data;
   reg [3:0] data_counter = 0;
 
@@ -24,8 +25,7 @@ module display_spi(input wire clk,
   assign dspi_ready = !reset && !send && dspi_cmd == `CMD_NONE;
 
   initial begin
-    spi_clk = 0;
-    spi_rst = 1;
+    spi_rst = 0;
     spi_cs = 1;
   end
 
@@ -45,31 +45,22 @@ module display_spi(input wire clk,
       endcase
     end // if (!reset && !send)
 
-    if (divider < 10) begin
-      divider <= divider + 1;
-    end else begin
-      divider <= 0;
-      spi_clk <= ~spi_clk;
+    if (reset) begin
+      spi_rst <= 1;
+      if (spi_rst == 1) begin
+        reset <= 0;
+      end
+    end
 
-      if (spi_clk) begin
-        if (reset) begin
-          spi_rst <= 1;
-          if (spi_rst == 1) begin
-            reset <= 0;
-          end
-        end
-
-        if (send) begin
-          if (data_counter > 0) begin
-            spi_cs <= 0;
-            spi_din <= data[7];
-            data <= data << 1;
-            data_counter <= data_counter - 1;
-          end else begin
-            spi_cs <= 1;
-            send <= 0;
-          end
-        end
+    if (send) begin
+      if (data_counter > 0) begin
+        spi_cs <= 0;
+        spi_din <= data[7];
+        data <= data << 1;
+        data_counter <= data_counter - 1;
+      end else begin
+        spi_cs <= 1;
+        send <= 0;
       end
     end
   end
