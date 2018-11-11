@@ -1,7 +1,10 @@
 .PHONY: all
 all: flash-uart_hello
 
-display.blif: font.mem
+display_hello.blif: font.mem text.mem
+
+text.mem: text.txt
+	hexdump -v -e '/1 "%02X "' $< > $@
 
 .PRECIOUS: %.bin %.vcd %.d
 

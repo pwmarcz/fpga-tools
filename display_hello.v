@@ -18,18 +18,8 @@ module text_display(input wire       clk,
 
   initial begin
     $readmemh("font.mem", font);
+    $readmemh("text.mem", text);
     d_data_ready <= 0;
-    text[0] <= "H";
-    text[1] <= "e";
-    text[2] <= "l";
-    text[3] <= "l";
-    text[4] <= "o";
-    text[5] <= " ";
-    text[6] <= "W";
-    text[7] <= "o";
-    text[8] <= "r";
-    text[9] <= "l";
-    text[10] <= "d";
   end
 
   always @(posedge clk) begin
