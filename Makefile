@@ -1,5 +1,5 @@
 .PHONY: all
-all: flash-uart_hello
+all:
 
 display_hello.blif: font.mem text.mem
 
@@ -27,16 +27,16 @@ text.mem: text.txt
 %.out: %.v %.d
 	iverilog $< -o $@
 
-.PHONY: flash-%
-flash-%: %.bin
+.PHONY: flash
+flash: $(V:.v=.bin)
 	iceprog $<
 
-.PHONY: sim-%
-sim-%: %.vcd
+.PHONY: sim
+sim: $(V:.v=.vcd)
 	gtkwave $<
 
-.PHONY: run-%
-run-%: %.out
+.PHONY: run
+run: $(V:.v=.out)
 	./$<
 
 .PHONY: clean
