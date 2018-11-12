@@ -37,16 +37,24 @@ text.mem: text.txt
 	$(IVERILOG) $< -o $@
 
 .PHONY: flash
-flash: $(V:.v=.bin)
-	$(ICEPROG) $<
+flash: check-target $(V:.v=.bin)
+	$(ICEPROG) $(V:.v=.bin)
 
 .PHONY: sim
-sim: $(V:.v=.vcd)
-	$(GTKWAVE) $<
+sim: check-target $(V:.v=.vcd)
+	$(GTKWAVE) $(V:.v=.vcd)
 
 .PHONY: run
-run: $(V:.v=.out)
-	./$<
+run: check-target $(V:.v=.out)
+	./$(V:.v=.out)
+
+.PHONY: check-target
+check-target:
+ifeq ($(V),)
+	@echo "Define target name first, e.g.: make run V=myfile.v"
+	@echo
+	@exit 1
+endif
 
 .PHONY: clean
 clean:
