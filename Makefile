@@ -1,3 +1,12 @@
+YOSYS ?= yosys
+PNR ?= arachne-pnr
+ICEPACK ?= icepack
+ICEPROG ?= iceprog
+IVERILOG ?= iverilog
+GTKWAVE ?= gtkwave
+
+MAKEDEPS = ./make-deps
+
 .PHONY: all
 all:
 
@@ -8,32 +17,32 @@ text.mem: text.txt
 
 .PRECIOUS: %.bin %.vcd %.d
 
-%.d: %.v make-deps
-	./make-deps $(@:.d=.blif) $< > $@
-	./make-deps $(@:.d=.out) $< >> $@
+%.d: %.v $(MAKEDEPS)
+	$(MAKEDEPS) $(@:.d=.blif) $< > $@
+	$(MAKEDEPS) $(@:.d=.out) $< >> $@
 
 %.blif: %.v %.d
-	yosys -q -p "synth_ice40 -blif $@" $<
+	$(YOSYS) -q -p "synth_ice40 -blif $@" $<
 
 %.asc: icestick.pcf %.blif
-	arachne-pnr -p icestick.pcf $*.blif -o $@
+	$(PNR) -p icestick.pcf $*.blif -o $@
 
 %.bin: %.asc
-	icepack $*.asc $@
+	$(ICEPACK) $*.asc $@
 
 %.vcd: %.out
 	./$<
 
 %.out: %.v %.d
-	iverilog $< -o $@
+	$(IVERILOG) $< -o $@
 
 .PHONY: flash
 flash: $(V:.v=.bin)
-	iceprog $<
+	$(ICEPROG) $<
 
 .PHONY: sim
 sim: $(V:.v=.vcd)
-	gtkwave $<
+	$(GTKWAVE) $<
 
 .PHONY: run
 run: $(V:.v=.out)
