@@ -22,19 +22,19 @@ Make sure you're in the `dialout` group to be able to access serial ports.
 
 ### Simulation
 
-To run a Verilog program and display results in console, run `make run-X`:
-- `make run-memory_tb`
-- `make run-controller_tb`
+To run a Verilog program and display results in console, run `make run V=source.v`:
+- `make run V=memory_tb.v`
+- `make run V=controller_tb.v`
 
-To additionally view the results in GTKWave, use `make sim-X`:
+To additionally view the results in GTKWave, use `make sim V=source.v`:
 - `make sim-memory_tb`
 - `make sim-controller_tb`
 
 ### Flashing
 
-To flash the design to FPGA, use `make flash-X`:
-- `make flash-uart_memory`
-- `make flash-uart_controller`
+To flash the design to FPGA, use `make flash V=source.v`:
+- `make flash V=uart_memory`
+- `make flash V=uart_controller`
 
 ## Files
 
@@ -75,6 +75,7 @@ For serial communication, I'm using a module by Tim Goddard, copied here as (`ua
 - https://wiki.debian.org/FPGA/Lattice - describes open source toolchain for iCEstick
 - [open-fpga-verilog-tutorial](https://github.com/Obijuan/open-fpga-verilog-tutorial/wiki/Chapter-0%3A-you-are-leaving-the-private-sector) - an excellent tutorial series, translated from Spanish
 - *Verilog HDL* by Samir Palnitkar
+- [ice40-examples](https://github.com/nesl/ice40_examples) repo
 
 ## License
 
