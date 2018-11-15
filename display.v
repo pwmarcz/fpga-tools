@@ -1,4 +1,4 @@
-`include "display_commands.v"
+`include "ssd1306.v"
 
 `define CMD_NONE          2'b00
 `define CMD_RESET         2'b01
