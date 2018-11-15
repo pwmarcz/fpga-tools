@@ -10,43 +10,43 @@ MAKEDEPS = ./make-deps
 .PHONY: all
 all:
 
-display_hello.blif: font.mem text.mem
+build/display_hello.blif: font.mem text.mem
 
 text.mem: text.txt
 	hexdump -v -e '/1 "%02X "' $< > $@
 
-.PRECIOUS: %.bin %.vcd %.d
+.PRECIOUS: build/%.d build/%.blif build/%.bin %.d
 
-%.d: %.v $(MAKEDEPS)
+build/%.d: %.v $(MAKEDEPS)
 	$(MAKEDEPS) $(@:.d=.blif) $< > $@
 	$(MAKEDEPS) $(@:.d=.out) $< >> $@
 
-%.blif: %.v %.d
+build/%.blif: %.v build/%.d
 	$(YOSYS) -q -p "synth_ice40 -blif $@" $<
 
-%.asc: icestick.pcf %.blif
-	$(PNR) -p icestick.pcf $*.blif -o $@
+build/%.asc: build/%.blif icestick.pcf
+	$(PNR) -p icestick.pcf $< -o $@
 
-%.bin: %.asc
-	$(ICEPACK) $*.asc $@
+build/%.bin: build/%.asc
+	$(ICEPACK) $< $@
 
-%.vcd: %.out
-	./$<
+build/%.vcd: build/%.out
+	cd build && ./$<
 
-%.out: %.v %.d
+build/%.out: %.v build/%.d
 	$(IVERILOG) $< -o $@
 
 .PHONY: flash
-flash: check-target $(V:.v=.bin)
-	$(ICEPROG) $(V:.v=.bin)
+flash: check-target build/$(V:.v=.bin)
+	$(ICEPROG) build/$(V:.v=.bin)
 
 .PHONY: sim
-sim: check-target $(V:.v=.vcd)
-	$(GTKWAVE) $(V:.v=.vcd)
+sim: check-target build/$(V:.v=.vcd)
+	$(GTKWAVE) build/$(V:.v=.vcd)
 
 .PHONY: run
-run: check-target $(V:.v=.out)
-	./$(V:.v=.out)
+run: check-target build/$(V:.v=.out)
+	cd build && ./$(V:.v=.out)
 
 .PHONY: check-target
 check-target:
@@ -58,6 +58,6 @@ endif
 
 .PHONY: clean
 clean:
-	rm -f *.bin *.blif *.asc *.out *.d *.vcd
+	rm -f build/*
 
-include $(wildcard *.d)
+include $(wildcard build/*.d)
