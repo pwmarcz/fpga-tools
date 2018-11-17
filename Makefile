@@ -2,6 +2,7 @@ YOSYS ?= yosys
 PNR ?= arachne-pnr
 ICEPACK ?= icepack
 ICEPROG ?= iceprog
+ICETIME ?= icetime
 IVERILOG ?= iverilog
 GTKWAVE ?= gtkwave
 
@@ -47,6 +48,10 @@ sim: check-target build/$(V:.v=.vcd)
 .PHONY: run
 run: check-target build/$(V:.v=.out)
 	cd build && ./$(V:.v=.out)
+
+.PHONY: time
+time: check-target build/$(V:.v=.asc)
+	$(ICETIME) -d hx1k build/$(V:.v=.asc)
 
 .PHONY: check-target
 check-target:
