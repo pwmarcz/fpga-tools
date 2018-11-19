@@ -8,6 +8,10 @@ all:
 
 # Tool paths
 
+# Use apio toolchain
+TOOLCHAIN = $(HOME)/.apio/packages/toolchain-icestorm/bin
+export PATH := $(TOOLCHAIN):$(PATH)
+
 YOSYS ?= yosys
 PNR ?= arachne-pnr
 ICEPACK ?= icepack
@@ -23,6 +27,8 @@ MAKEDEPS = ./make-deps
 
 BOARD ?= icestick
 
+YOSYS_OPTS =
+
 ifeq ($(BOARD),icestick)
 PNR_OPTS = -d 1k -P tq144
 DEVICE = hx1k
@@ -33,6 +39,11 @@ ifeq ($(BOARD),bx)
 PNR_OPTS = -d 8k -P cm81
 DEVICE = lp8k
 PROG = tinyprog -p
+endif
+
+ifndef VERBOSE
+PNR_OPTS := -q $(PNR_OPTS)
+YOSYS_OPTS := -q $(YOSYS_OPTS)
 endif
 
 # Project-specific
@@ -52,7 +63,7 @@ build/%.d: %.v $(MAKEDEPS)
 # Synthesis
 
 build/%.$(BOARD).blif: %.v build/%.d
-	$(YOSYS) -q \
+	$(YOSYS) $(YOSYS_OPTS) \
 		-p "verilog_defines -DBOARD_$(BOARD) -DBOARD=$(BOARD)" \
 		-p "read_verilog $<" \
 		-p "synth_ice40 -blif $@"
