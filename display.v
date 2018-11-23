@@ -1,75 +1,47 @@
 `include "ssd1306.v"
 
-`define CMD_NONE          2'b00
-`define CMD_RESET         2'b01
-`define CMD_SEND_COMMAND  2'b10
-`define CMD_SEND_DATA     2'b11
+module display_spi(input wire       clk,
+                   input wire       transmit,
+                   input wire       is_data,
+                   input wire [7:0] tx_byte,
+                   output wire      ready,
 
-module display_spi(input wire clk,
-                   input wire [2:0] dspi_cmd,
-                   input wire [7:0] dspi_byte,
-
-                   output wire      dspi_ready,
-                   output reg       spi_din,
-                   output wire      spi_clk,
-                   output reg       spi_cs,
-                   output reg       spi_dc,
-                   output reg       spi_rst);
-  assign spi_clk = clk;
+                   output wire      pin_din,
+                   output wire      pin_clk,
+                   output wire      pin_cs,
+                   output reg       pin_dc);
+  assign pin_clk = clk;
 
   reg [7:0] data;
   reg [3:0] data_counter = 0;
+  wire      transmitting = data_counter > 0;
+  assign pin_din = data[7];
+  assign pin_cs = !transmitting;
 
-  reg reset = 0;
-  reg send = 0;
-  assign dspi_ready = !reset && !send && dspi_cmd == `CMD_NONE;
-
-  initial begin
-    spi_rst = 0;
-    spi_cs = 1;
-  end
+  assign ready = !transmit && !transmitting;
 
   always @(posedge clk) begin
-    if (!reset && !send) begin
-      case (dspi_cmd)
-        `CMD_RESET: begin
-          reset <= 1;
-          spi_rst <= 0;
-        end
-        `CMD_SEND_COMMAND, `CMD_SEND_DATA: begin
-          send <= 1;
-          spi_dc <= (dspi_cmd == `CMD_SEND_DATA);
-          data <= dspi_byte;
-          data_counter <= 8;
-        end
-      endcase
-    end // if (!reset && !send)
-
-    if (reset) begin
-      spi_rst <= 1;
-      if (spi_rst == 1) begin
-        reset <= 0;
-      end
+    if (transmit && !transmitting) begin
+      data <= tx_byte;
+      pin_dc <= is_data;
+      data_counter <= 8;
     end
 
-    if (send) begin
-      if (data_counter > 0) begin
-        spi_cs <= 0;
-        spi_din <= data[7];
-        data <= data << 1;
-        data_counter <= data_counter - 1;
-      end else begin
-        spi_cs <= 1;
-        send <= 0;
-      end
+    if (transmitting) begin
+      data <= data << 1;
+      data_counter <= data_counter - 1;
     end
   end
 endmodule // display_spi
 
 module display(input wire clk,
-               input wire       dspi_ready,
-               output reg [2:0] dspi_cmd,
-               output reg [7:0] dspi_byte,
+               output reg       pin_res,
+
+               input wire       spi_ready,
+               output reg       spi_transmit,
+               output reg       spi_is_data,
+               output reg [7:0] spi_tx_byte,
+
                output reg       d_read,
                output reg [2:0] d_page_idx,
                output reg [6:0] d_column_idx,
@@ -97,8 +69,6 @@ module display(input wire clk,
   integer i;
 
   initial begin
-    dspi_cmd = `CMD_RESET;
-
     i = -1;
 
     // Init commands
@@ -141,20 +111,22 @@ module display(input wire clk,
     command <= commands[command_idx];
     if (send_command) begin
       send_command <= 0;
-      dspi_cmd <= `CMD_SEND_COMMAND;
-      dspi_byte <= command;
+      spi_transmit <= 1;
+      spi_is_data <= 0;
+      spi_tx_byte <= command;
     end else begin
-      dspi_cmd <= `CMD_NONE;
+      spi_transmit <= 0;
+      pin_res <= 1;
       case (state)
         STATE_RESET: begin
-          if (dspi_ready) begin
-            dspi_cmd <= `CMD_RESET;
+          if (spi_ready) begin
+            pin_res <= 0;
             state <= STATE_INIT;
             command_idx <= 0;
           end
         end
         STATE_INIT: begin
-          if (dspi_ready) begin
+          if (spi_ready) begin
             send_command <= 1;
 
             command_idx <= command_idx + 1;
@@ -164,7 +136,7 @@ module display(input wire clk,
           end
         end
         STATE_REFRESH_BEGIN: begin
-          if (dspi_ready) begin
+          if (spi_ready) begin
             if (command_idx < N_INIT_COMMANDS + N_REFRESH_COMMANDS) begin
               send_command <= 1;
               command_idx <= command_idx + 1;
@@ -179,13 +151,14 @@ module display(input wire clk,
         STATE_REFRESH_DATA: begin
           d_read <= 0;
           if (d_data_ready) begin
-            dspi_cmd <= `CMD_SEND_DATA;
-            dspi_byte <= d_data;
+            spi_transmit <= 1;
+            spi_is_data <= 1;
+            spi_tx_byte <= d_data;
             state <= STATE_ADVANCE;
           end
         end
         STATE_ADVANCE: begin
-          if (dspi_ready) begin
+          if (spi_ready) begin
             d_read <= 1;
             state <= STATE_REFRESH_DATA;
             d_column_idx <= d_column_idx + 1;
@@ -197,7 +170,7 @@ module display(input wire clk,
                 command_idx <= N_INIT_COMMANDS;
               end
             end
-          end // if (dspi_ready)
+          end // if (spi_ready)
         end
       endcase // case (state)
     end

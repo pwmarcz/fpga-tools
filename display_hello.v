@@ -47,7 +47,8 @@ module display_demo(input wire  iCE_CLK,
                     output wire PIO1_06);
 
   wire dspi_ready;
-  wire [2:0] dspi_cmd;
+  wire dspi_transmit;
+  wire dspi_is_data;
   wire [7:0] dspi_byte;
 
   wire       d_read;
@@ -57,19 +58,21 @@ module display_demo(input wire  iCE_CLK,
   wire       d_data_ready;
 
   display_spi dspi(.clk(iCE_CLK),
-                   .dspi_ready(dspi_ready),
-                   .dspi_cmd(dspi_cmd),
-                   .dspi_byte(dspi_byte),
-                   .spi_din(PIO1_02),
-                   .spi_clk(PIO1_03),
-                   .spi_cs(PIO1_04),
-                   .spi_dc(PIO1_05),
-                   .spi_rst(PIO1_06));
+                   .ready(dspi_ready),
+                   .transmit(dspi_transmit),
+                   .is_data(dspi_is_data),
+                   .tx_byte(dspi_byte),
+                   .pin_din(PIO1_02),
+                   .pin_clk(PIO1_03),
+                   .pin_cs(PIO1_04),
+                   .pin_dc(PIO1_05));
 
   display d(.clk(iCE_CLK),
-            .dspi_ready(dspi_ready),
-            .dspi_cmd(dspi_cmd),
-            .dspi_byte(dspi_byte),
+            .pin_res(PIO1_06),
+            .spi_ready(dspi_ready),
+            .spi_transmit(dspi_transmit),
+            .spi_is_data(dspi_is_data),
+            .spi_tx_byte(dspi_byte),
             .d_read(d_read),
             .d_page_idx(d_page_idx),
             .d_column_idx(d_column_idx),
