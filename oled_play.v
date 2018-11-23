@@ -1,5 +1,5 @@
 `include "uart.v"
-`include "display.v"
+`include "oled.v"
 
 `define BAUD_RATE 115300
 
@@ -8,7 +8,7 @@ module uart_display(input wire       clk,
                     // input wire [2:0] d_page_idx,
                     // input wire [6:0] d_column_idx,
                     output reg [7:0] d_data,
-                    output reg       d_data_ready,
+                    output reg       d_ack,
                     input wire       uart_received,
                     input wire [7:0] uart_rx_byte);
 
@@ -43,54 +43,42 @@ module uart_display(input wire       clk,
 
     if (d_read) begin
       d_data <= data[data_read_idx];
-      d_data_ready <= 1;
+      d_ack <= 1;
       data_read_idx <= (data_read_idx + 1) % DISPLAY_SIZE;
     end else begin
-      d_data_ready <= 0;
+      d_ack <= 0;
     end
   end
 endmodule
 
-module display_demo(input wire  iCE_CLK,
-                    input wire  RS232_Rx_TTL,
-                    output wire PIO1_02,
-                    output wire PIO1_03,
-                    output wire PIO1_04,
-                    output wire PIO1_05,
-                    output wire PIO1_06);
-
-  wire dspi_ready;
-  wire [2:0] dspi_cmd;
-  wire [7:0] dspi_byte;
+module top(input wire  iCE_CLK,
+           input wire  RS232_Rx_TTL,
+           output wire PIO1_02,
+           output wire PIO1_03,
+           output wire PIO1_04,
+           output wire PIO1_05,
+           output wire PIO1_06);
 
   wire       d_read;
   // wire [2:0] d_page_idx;
   // wire [6:0] d_column_idx;
   wire [7:0] d_data;
-  wire       d_data_ready;
+  wire       d_ack;
 
   wire       uart_received;
   wire [7:0] uart_rx_byte;
 
-  display_spi dspi(.clk(iCE_CLK),
-                   .dspi_ready(dspi_ready),
-                   .dspi_cmd(dspi_cmd),
-                   .dspi_byte(dspi_byte),
-                   .spi_din(PIO1_02),
-                   .spi_clk(PIO1_03),
-                   .spi_cs(PIO1_04),
-                   .spi_dc(PIO1_05),
-                   .spi_rst(PIO1_06));
-
-  display d(.clk(iCE_CLK),
-            .dspi_ready(dspi_ready),
-            .dspi_cmd(dspi_cmd),
-            .dspi_byte(dspi_byte),
-            .d_read(d_read),
-            // .d_page_idx(d_page_idx),
-            // .d_column_idx(d_column_idx),
-            .d_data(d_data),
-            .d_data_ready(d_data_ready));
+  oled o(.clk(iCE_CLK),
+         .pin_din(PIO1_02),
+         .pin_clk(PIO1_03),
+         .pin_cs(PIO1_04),
+         .pin_dc(PIO1_05),
+         .pin_res(PIO1_06),
+         .read(d_read),
+         // .page_idx(d_page_idx),
+         // .column_idx(d_column_idx),
+         .data(d_data),
+         .ack(d_ack));
 
   uart #(.baud_rate(`BAUD_RATE), .sys_clk_freq(12000000))
   uart0(.clk(iCE_CLK),                    // The master clock for this module
@@ -109,7 +97,7 @@ module display_demo(input wire  iCE_CLK,
   uart_display ud(.clk(iCE_CLK),
                   .d_read(d_read),
                   .d_data(d_data),
-                  .d_data_ready(d_data_ready),
+                  .d_ack(d_ack),
                   .uart_received(uart_received),
                   .uart_rx_byte(uart_rx_byte));
 

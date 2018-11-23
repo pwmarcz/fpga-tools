@@ -1,15 +1,57 @@
 `include "ssd1306.v"
 
-module display_spi(input wire       clk,
-                   input wire       transmit,
-                   input wire       is_data,
-                   input wire [7:0] tx_byte,
-                   output wire      ready,
+module oled(input wire        clk,
+            input wire        pin_din,
+            input wire        pin_clk,
+            input wire        pin_cs,
+            input wire        pin_dc,
+            input wire        pin_res,
 
-                   output wire      pin_din,
-                   output wire      pin_clk,
-                   output wire      pin_cs,
-                   output reg       pin_dc);
+            output wire       read,
+            output wire [2:0] page_idx,
+            output wire [6:0] column_idx,
+            input wire [7:0]  data,
+            input wire        ack);
+
+  wire       transmit;
+  wire       is_data;
+  wire [7:0] tx_byte;
+  wire       ready;
+
+  oled_spi spi(.clk(clk),
+               .transmit(transmit),
+               .is_data(is_data),
+               .tx_byte(tx_byte),
+               .ready(ready),
+               .pin_din(pin_din),
+               .pin_clk(pin_clk),
+               .pin_cs(pin_cs),
+               .pin_dc(pin_dc));
+
+  oled_controller controller(.clk(clk),
+                             .pin_res(pin_res),
+                             .spi_transmit(transmit),
+                             .spi_is_data(is_data),
+                             .spi_tx_byte(tx_byte),
+                             .spi_ready(ready),
+                             .read(read),
+                             .page_idx(page_idx),
+                             .column_idx(column_idx),
+                             .data(data),
+                             .ack(ack));
+
+endmodule
+
+module oled_spi(input wire       clk,
+                input wire       transmit,
+                input wire       is_data,
+                input wire [7:0] tx_byte,
+                output wire      ready,
+
+                output wire      pin_din,
+                output wire      pin_clk,
+                output wire      pin_cs,
+                output reg       pin_dc);
   assign pin_clk = clk;
 
   reg [7:0] data;
@@ -32,21 +74,21 @@ module display_spi(input wire       clk,
       data_counter <= data_counter - 1;
     end
   end
-endmodule // display_spi
+endmodule
 
-module display(input wire clk,
-               output reg       pin_res,
+module oled_controller(input wire       clk,
+                       output reg       pin_res,
 
-               input wire       spi_ready,
-               output reg       spi_transmit,
-               output reg       spi_is_data,
-               output reg [7:0] spi_tx_byte,
+                       output reg       spi_transmit,
+                       output reg       spi_is_data,
+                       output reg [7:0] spi_tx_byte,
+                       input wire       spi_ready,
 
-               output reg       d_read,
-               output reg [2:0] d_page_idx,
-               output reg [6:0] d_column_idx,
-               input wire [7:0] d_data,
-               input wire       d_data_ready);
+                       output reg       read,
+                       output reg [2:0] page_idx,
+                       output reg [6:0] column_idx,
+                       input wire [7:0] data,
+                       input wire       ack);
 
   localparam N_INIT_COMMANDS = 25;
   localparam N_REFRESH_COMMANDS = 6;
@@ -142,37 +184,37 @@ module display(input wire clk,
               command_idx <= command_idx + 1;
             end else begin
               state <= STATE_REFRESH_DATA;
-              d_page_idx <= 0;
-              d_column_idx <= 0;
-              d_read <= 1;
+              page_idx <= 0;
+              column_idx <= 0;
+              read <= 1;
             end
           end
         end
         STATE_REFRESH_DATA: begin
-          d_read <= 0;
-          if (d_data_ready) begin
+          read <= 0;
+          if (ack) begin
             spi_transmit <= 1;
             spi_is_data <= 1;
-            spi_tx_byte <= d_data;
+            spi_tx_byte <= data;
             state <= STATE_ADVANCE;
           end
         end
         STATE_ADVANCE: begin
           if (spi_ready) begin
-            d_read <= 1;
+            read <= 1;
             state <= STATE_REFRESH_DATA;
-            d_column_idx <= d_column_idx + 1;
-            if (d_column_idx == 127) begin
-              d_page_idx <= d_page_idx + 1;
-              if (d_page_idx == 7) begin
-                d_read <= 0;
+            column_idx <= column_idx + 1;
+            if (column_idx == 127) begin
+              page_idx <= page_idx + 1;
+              if (page_idx == 7) begin
+                read <= 0;
                 state <= STATE_REFRESH_BEGIN;
                 command_idx <= N_INIT_COMMANDS;
               end
             end
-          end // if (spi_ready)
+          end
         end
-      endcase // case (state)
+      endcase
     end
   end
-endmodule // display
+endmodule
