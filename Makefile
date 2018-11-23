@@ -32,13 +32,13 @@ YOSYS_OPTS =
 ifeq ($(BOARD),icestick)
 PNR_OPTS = -d 1k -P tq144
 DEVICE = hx1k
-PROG = iceprog
+PROG = $(ICEPROG)
 endif
 
 ifeq ($(BOARD),bx)
 PNR_OPTS = -d 8k -P cm81
 DEVICE = lp8k
-PROG = tinyprog -p
+PROG = $(TINYPROG) -p
 endif
 
 ifndef VERBOSE
@@ -56,6 +56,7 @@ text.mem: text.txt
 # Dependencies
 
 build/%.d: %.v $(MAKEDEPS)
+	mkdir -p $(dir $@)
 	$(MAKEDEPS) $(@:.d=.bx.blif) $< > $@
 	$(MAKEDEPS) $(@:.d=.icestick.blif) $< >> $@
 	$(MAKEDEPS) $(@:.d=.out) $< >> $@
@@ -65,8 +66,8 @@ build/%.d: %.v $(MAKEDEPS)
 build/%.$(BOARD).blif: %.v build/%.d
 	$(YOSYS) $(YOSYS_OPTS) \
 		-p "verilog_defines -DBOARD_$(BOARD) -DBOARD=$(BOARD)" \
-		-p "read_verilog $<" \
-		-p "synth_ice40 -blif $@"
+		-p "read_verilog -noautowire $<" \
+		-p "synth_ice40 -top top -blif $@"
 
 build/%.$(BOARD).asc: build/%.$(BOARD).blif $(BOARD).pcf
 	$(PNR) -p $(BOARD).pcf $(PNR_OPTS) $< -o $@
