@@ -1,4 +1,5 @@
 `include "ssd1306.v"
+`include "ssd1331.v"
 
 module oled(input wire        clk,
             input wire        pin_din,
@@ -8,10 +9,15 @@ module oled(input wire        clk,
             input wire        pin_res,
 
             output wire       read,
-            output wire [2:0] page_idx,
+            output wire [5:0] row_idx,
             output wire [6:0] column_idx,
+            // mono: 8-pixel vertical strip
             input wire [7:0]  data,
+            // color: 5+6+5 bit RGB value
+            input wire [15:0] data_rgb,
             input wire        ack);
+
+  parameter color = 0;
 
   wire       transmit;
   wire       is_data;
@@ -28,17 +34,19 @@ module oled(input wire        clk,
                .pin_cs(pin_cs),
                .pin_dc(pin_dc));
 
-  oled_controller controller(.clk(clk),
-                             .pin_res(pin_res),
-                             .spi_transmit(transmit),
-                             .spi_is_data(is_data),
-                             .spi_tx_byte(tx_byte),
-                             .spi_ready(ready),
-                             .read(read),
-                             .page_idx(page_idx),
-                             .column_idx(column_idx),
-                             .data(data),
-                             .ack(ack));
+  oled_controller #(.color(color))
+  controller(.clk(clk),
+             .pin_res(pin_res),
+             .spi_transmit(transmit),
+             .spi_is_data(is_data),
+             .spi_tx_byte(tx_byte),
+             .spi_ready(ready),
+             .read(read),
+             .row_idx(row_idx),
+             .column_idx(column_idx),
+             .data(data),
+             .data_rgb(data_rgb),
+             .ack(ack));
 
 endmodule
 
@@ -77,21 +85,26 @@ module oled_spi(input wire       clk,
 endmodule
 
 module oled_controller(input wire       clk,
-                       output reg       pin_res,
+                       output reg        pin_res,
 
-                       output reg       spi_transmit,
-                       output reg       spi_is_data,
-                       output reg [7:0] spi_tx_byte,
-                       input wire       spi_ready,
+                       output reg        spi_transmit,
+                       output reg        spi_is_data,
+                       output reg [7:0]  spi_tx_byte,
+                       input wire        spi_ready,
 
-                       output reg       read,
-                       output reg [2:0] page_idx,
-                       output reg [6:0] column_idx,
-                       input wire [7:0] data,
-                       input wire       ack);
+                       output reg        read,
+                       output reg [5:0]  row_idx,
+                       output reg [6:0]  column_idx,
+                       input wire [7:0]  data,
+                       input wire [15:0] data_rgb,
+                       input wire        ack);
 
-  localparam N_INIT_COMMANDS = 25;
+  parameter color = 0;
+
+  localparam N_INIT_COMMANDS = color ? 38 : 25;
   localparam N_REFRESH_COMMANDS = 6;
+  localparam WIDTH = color ? 96 : 128;
+  localparam HEIGHT = color ? 64 : 8;
 
   localparam
     STATE_RESET = 0,
@@ -99,12 +112,15 @@ module oled_controller(input wire       clk,
     STATE_IDLE = 2,
     STATE_REFRESH_BEGIN = 3,
     STATE_REFRESH_DATA = 4,
-    STATE_ADVANCE = 5;
+    STATE_TRANSMIT_LOWER_BYTE = 5,
+    STATE_ADVANCE = 6;
 
   reg [7:0] commands[0:N_INIT_COMMANDS+N_REFRESH_COMMANDS-1];
   reg [8:0] command_idx = 0;
   reg [7:0] command;
   reg       send_command = 0;
+
+  reg [7:0] data_rgb_lower_byte;
 
   reg [3:0] state = STATE_RESET;
 
@@ -113,40 +129,90 @@ module oled_controller(input wire       clk,
   initial begin
     i = -1;
 
-    // Init commands
-    i++; commands[i] <= `SSD1306_DISPLAYOFF;
-    i++; commands[i] <= `SSD1306_SETDISPLAYCLOCKDIV;
-    i++; commands[i] <= 'h80;
-    i++; commands[i] <= `SSD1306_SETMULTIPLEX;
-    i++; commands[i] <= 'h3F;
-    i++; commands[i] <= `SSD1306_SETDISPLAYOFFSET;
-    i++; commands[i] <= 'h00;
-    i++; commands[i] <= `SSD1306_SETSTARTLINE | 'h00;
-    i++; commands[i] <= `SSD1306_CHARGEPUMP;
-    i++; commands[i] <= 'h14;
-    i++; commands[i] <= `SSD1306_MEMORYMODE;
-    i++; commands[i] <= 'h00;
-    i++; commands[i] <= `SSD1306_SEGREMAP | 'h01;
-    i++; commands[i] <= `SSD1306_COMSCANDEC;
-    i++; commands[i] <= `SSD1306_SETCOMPINS;
-    i++; commands[i] <= 'h12;
-    i++; commands[i] <= `SSD1306_SETCONTRAST;
-    i++; commands[i] <= 'h70;
-    i++; commands[i] <= `SSD1306_SETPRECHARGE;
-    i++; commands[i] <= 'hF1;
-    i++; commands[i] <= `SSD1306_SETVCOMDETECT;
-    i++; commands[i] <= 'h40;
-    i++; commands[i] <= `SSD1306_DISPLAYALLON_RESUME;
-    i++; commands[i] <= `SSD1306_NORMALDISPLAY;
-    i++; commands[i] <= `SSD1306_DISPLAYON;
+    if (color) begin
+      // Init commands
+      i++; commands[i] <= `SSD1331_DISPLAY_OFF;
+      i++; commands[i] <= `SSD1331_SET_CONTRAST_A;
+      i++; commands[i] <= 'hFF;
+      i++; commands[i] <= `SSD1331_SET_CONTRAST_B;
+      i++; commands[i] <= 'hFF;
+      i++; commands[i] <= `SSD1331_SET_CONTRAST_C;
+      i++; commands[i] <= 'hFF;
+      i++; commands[i] <= `SSD1331_MASTER_CURRENT_CONTROL;
+      i++; commands[i] <= 'h06;
+      i++; commands[i] <= `SSD1331_SET_PRECHARGE_SPEED_A;
+      i++; commands[i] <= 'h64;
+      i++; commands[i] <= `SSD1331_SET_PRECHARGE_SPEED_B;
+      i++; commands[i] <= 'h78;
+      i++; commands[i] <= `SSD1331_SET_PRECHARGE_SPEED_C;
+      i++; commands[i] <= 'h64;
+      i++; commands[i] <= `SSD1331_SET_REMAP;
+      i++; commands[i] <= 'h72;
+      i++; commands[i] <= `SSD1331_SET_DISPLAY_START_LINE;
+      i++; commands[i] <= 'h00;
+      i++; commands[i] <= `SSD1331_SET_DISPLAY_OFFSET;
+      i++; commands[i] <= 'h00;
+      i++; commands[i] <= `SSD1331_NORMAL_DISPLAY;
+      i++; commands[i] <= `SSD1331_SET_MULTIPLEX_RATIO;
+      i++; commands[i] <= 'h3F;
+      i++; commands[i] <= `SSD1331_SET_MASTER_CONFIGURE;
+      i++; commands[i] <= 'h8E;
+      i++; commands[i] <= `SSD1331_POWER_SAVE_MODE;
+      i++; commands[i] <= 'h00;
+      i++; commands[i] <= `SSD1331_PHASE_PERIOD_ADJUSTMENT;
+      i++; commands[i] <= 'h31;
+      i++; commands[i] <= `SSD1331_DISPLAY_CLOCK_DIV;
+      i++; commands[i] <= 'hF0;
+      i++; commands[i] <= `SSD1331_SET_PRECHARGE_VOLTAGE;
+      i++; commands[i] <= 'h3A;
+      i++; commands[i] <= `SSD1331_SET_V_VOLTAGE;
+      i++; commands[i] <= 'h3E;
+      i++; commands[i] <= `SSD1331_DEACTIVE_SCROLLING;
+      i++; commands[i] <= `SSD1331_NORMAL_BRIGHTNESS_DISPLAY_ON;
 
-    // Refresh commands
-    i++; commands[i] <= `SSD1306_COLUMNADDR;
-    i++; commands[i] <= 0;
-    i++; commands[i] <= 127;
-    i++; commands[i] <= `SSD1306_PAGEADDR;
-    i++; commands[i] <= 0;
-    i++; commands[i] <= 7;
+      // Refresh commands
+      i++; commands[i] <= `SSD1331_SET_COLUMN_ADDRESS;
+      i++; commands[i] <= 0;
+      i++; commands[i] <= WIDTH - 1;
+      i++; commands[i] <= `SSD1331_SET_ROW_ADDRESS;
+      i++; commands[i] <= 0;
+      i++; commands[i] <= HEIGHT - 1;
+    end else begin
+      // Init commands
+      i++; commands[i] <= `SSD1306_DISPLAYOFF;
+      i++; commands[i] <= `SSD1306_SETDISPLAYCLOCKDIV;
+      i++; commands[i] <= 'h80;
+      i++; commands[i] <= `SSD1306_SETMULTIPLEX;
+      i++; commands[i] <= 'h3F;
+      i++; commands[i] <= `SSD1306_SETDISPLAYOFFSET;
+      i++; commands[i] <= 'h00;
+      i++; commands[i] <= `SSD1306_SETSTARTLINE | 'h00;
+      i++; commands[i] <= `SSD1306_CHARGEPUMP;
+      i++; commands[i] <= 'h14;
+      i++; commands[i] <= `SSD1306_MEMORYMODE;
+      i++; commands[i] <= 'h00;
+      i++; commands[i] <= `SSD1306_SEGREMAP | 'h01;
+      i++; commands[i] <= `SSD1306_COMSCANDEC;
+      i++; commands[i] <= `SSD1306_SETCOMPINS;
+      i++; commands[i] <= 'h12;
+      i++; commands[i] <= `SSD1306_SETCONTRAST;
+      i++; commands[i] <= 'h70;
+      i++; commands[i] <= `SSD1306_SETPRECHARGE;
+      i++; commands[i] <= 'hF1;
+      i++; commands[i] <= `SSD1306_SETVCOMDETECT;
+      i++; commands[i] <= 'h40;
+      i++; commands[i] <= `SSD1306_DISPLAYALLON_RESUME;
+      i++; commands[i] <= `SSD1306_NORMALDISPLAY;
+      i++; commands[i] <= `SSD1306_DISPLAYON;
+
+      // Refresh commands
+      i++; commands[i] <= `SSD1306_COLUMNADDR;
+      i++; commands[i] <= 0;
+      i++; commands[i] <= WIDTH - 1;
+      i++; commands[i] <= `SSD1306_PAGEADDR;
+      i++; commands[i] <= 0;
+      i++; commands[i] <= HEIGHT - 1;
+    end
   end
 
   always @(posedge clk) begin
@@ -184,7 +250,7 @@ module oled_controller(input wire       clk,
               command_idx <= command_idx + 1;
             end else begin
               state <= STATE_REFRESH_DATA;
-              page_idx <= 0;
+              row_idx <= 0;
               column_idx <= 0;
               read <= 1;
             end
@@ -195,21 +261,41 @@ module oled_controller(input wire       clk,
           if (ack) begin
             spi_transmit <= 1;
             spi_is_data <= 1;
-            spi_tx_byte <= data;
-            state <= STATE_ADVANCE;
+            if (color) begin
+              spi_tx_byte <= data_rgb[15:8];
+              data_rgb_lower_byte <= data_rgb[7:0];
+              state <= STATE_TRANSMIT_LOWER_BYTE;
+            end else begin
+              spi_tx_byte <= data;
+              state <= STATE_ADVANCE;
+            end
+          end
+        end
+        STATE_TRANSMIT_LOWER_BYTE: begin
+          if (color) begin
+            if (spi_ready) begin
+              spi_transmit <= 1;
+              spi_is_data <= 1;
+              spi_tx_byte <= data_rgb_lower_byte;
+              state <= STATE_ADVANCE;
+            end
           end
         end
         STATE_ADVANCE: begin
           if (spi_ready) begin
-            read <= 1;
-            state <= STATE_REFRESH_DATA;
-            column_idx <= column_idx + 1;
-            if (column_idx == 127) begin
-              page_idx <= page_idx + 1;
-              if (page_idx == 7) begin
-                read <= 0;
-                state <= STATE_REFRESH_BEGIN;
-                command_idx <= N_INIT_COMMANDS;
+            if (column_idx == WIDTH - 1 && row_idx == HEIGHT - 1) begin
+              state <= STATE_REFRESH_BEGIN;
+              command_idx <= N_INIT_COMMANDS;
+            end else begin
+              read <= 1;
+              state <= STATE_REFRESH_DATA;
+              column_idx <= column_idx + 1;
+              if (column_idx == WIDTH - 1) begin
+                column_idx <= 0;
+                if (color)
+                  row_idx <= row_idx + 1;
+                else
+                  row_idx <= row_idx + 1;
               end
             end
           end

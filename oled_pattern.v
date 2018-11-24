@@ -4,12 +4,12 @@
 
 module pattern(input wire       clk,
                input wire       read,
-               input wire [2:0] page_idx,
+               input wire [5:0] row_idx,
                input wire [6:0] column_idx,
                output reg [7:0] data,
                output reg       ack);
 
-  wire page_odd = page_idx & 1;
+  wire page_odd = row_idx & 1;
   wire column_field_odd = ((column_idx >> 3) & 1);
   wire field_black = page_odd ^ column_field_odd;
   wire column_odd = column_idx & 1;
@@ -36,7 +36,7 @@ module top(input wire  iCE_CLK,
            output wire PIO1_06);
 
   wire       read;
-  wire [2:0] page_idx;
+  wire [5:0] row_idx;
   wire [6:0] column_idx;
   wire [7:0] data;
   wire       ack;
@@ -48,14 +48,14 @@ module top(input wire  iCE_CLK,
          .pin_dc(PIO1_05),
          .pin_res(PIO1_06),
          .read(read),
-         .page_idx(page_idx),
+         .row_idx(row_idx),
          .column_idx(column_idx),
          .data(data),
          .ack(ack));
 
   pattern p(.clk(iCE_CLK),
             .read(read),
-            .page_idx(page_idx),
+            .row_idx(row_idx),
             .column_idx(column_idx),
             .data(data),
             .ack(ack));
