@@ -28,7 +28,7 @@ module pattern(input wire       clk,
   end
 endmodule
 
-module top(input wire  iCE_CLK,
+module top(input wire  CLK,
            output wire PIO1_02,
            output wire PIO1_03,
            output wire PIO1_04,
@@ -41,7 +41,7 @@ module top(input wire  iCE_CLK,
   wire [7:0] data;
   wire       ack;
 
-  oled o(.clk(iCE_CLK),
+  oled o(.clk(CLK),
          .pin_din(PIO1_02),
          .pin_clk(PIO1_03),
          .pin_cs(PIO1_04),
@@ -53,7 +53,7 @@ module top(input wire  iCE_CLK,
          .data(data),
          .ack(ack));
 
-  pattern p(.clk(iCE_CLK),
+  pattern p(.clk(CLK),
             .read(read),
             .row_idx(row_idx),
             .column_idx(column_idx),
