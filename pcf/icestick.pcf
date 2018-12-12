@@ -64,4 +64,4 @@ set_io -nowarn RS232_Rx_TTL 9
 #set_io -nowarn CRESET_B 66
 
 # 12 MHz clock
-set_io -nowarn iCE_CLK 21
+set_io -nowarn CLK 21
