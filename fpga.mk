@@ -1,9 +1,10 @@
 
-# Don't run anything by default
-.PHONY: all
-all:
-
 SELF_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
+# Show usage by default
+.PHONY: usage
+usage:
+	@cat fpga.mk.md
 
 # Don't delete these
 .PRECIOUS: build/%.d build/%.blif build/%.bin build/%.asc
