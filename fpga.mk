@@ -99,7 +99,7 @@ build/%.out: %.v build/%.d
 
 # Top-level goals, using V= parameter
 
-TESTS = $(shell find -name '*_tb.v')
+TESTS = $(wildcard *_tb.v)
 
 blif bin flash sim run time::
 ifeq ($(V),)
