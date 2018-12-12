@@ -110,7 +110,7 @@ endif
 blif:: build/$(V:.v=.$(BOARD).blif)
 
 .PHONY: bin
-blif:: build/$(V:.v=.$(BOARD).bin)
+bin:: build/$(V:.v=.$(BOARD).bin)
 
 .PHONY: flash
 flash:: build/$(V:.v=.$(BOARD).bin)
