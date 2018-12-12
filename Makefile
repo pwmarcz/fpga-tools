@@ -3,6 +3,8 @@
 .PHONY: all
 all:
 
+SELF_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+
 # Custom project configuration
 -include ./project.mk
 
@@ -34,11 +36,10 @@ ICEPROG := sudo $$(which $(ICEPROG))
 TINYPROG := sudo $$(which $(TINYPROG))
 endif
 
-MAKEDEPS = ./make-deps
-
 # Board-specific configuration
 
 BOARD ?= icestick
+PCF := $(SELF_DIR)/pcf/$(BOARD).pcf
 
 YOSYS_OPTS =
 
@@ -67,11 +68,11 @@ endif
 
 # Dependencies
 
-build/%.d: %.v $(MAKEDEPS)
+build/%.d: %.v
 	@mkdir -p $(dir $@)
-	@$(MAKEDEPS) $(@:.d=.bx.blif) $< > $@
-	@$(MAKEDEPS) $(@:.d=.icestick.blif) $< >> $@
-	@$(MAKEDEPS) $(@:.d=.out) $< >> $@
+	@$(SELF_DIR)/make-deps $(@:.d=.bx.blif) $< > $@
+	@$(SELF_DIR)/make-deps $(@:.d=.icestick.blif) $< >> $@
+	@$(SELF_DIR)/make-deps $(@:.d=.out) $< >> $@
 
 # Synthesis
 
@@ -81,8 +82,8 @@ build/%.$(BOARD).blif: %.v build/%.d
 		-p "read_verilog -noautowire $<" \
 		-p "synth_ice40 -top $(TOP) -blif $@"
 
-build/%.$(BOARD).asc: build/%.$(BOARD).blif pcf/$(BOARD).pcf
-	$(PNR) -p pcf/$(BOARD).pcf $(PNR_OPTS) $< -o $@
+build/%.$(BOARD).asc: build/%.$(BOARD).blif $(PCF)
+	$(PNR) -p $(PCF) $(PNR_OPTS) $< -o $@
 
 ifdef RAM_FILE
 # Use icebram to replace memory contents.
