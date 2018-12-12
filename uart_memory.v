@@ -1,4 +1,4 @@
-`include "uart.v"
+`include "components/uart.v"
 `include "controller.v"
 
 // Read test fails for higher baud rates (???)

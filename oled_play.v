@@ -1,4 +1,4 @@
-`include "uart.v"
+`include "components/uart.v"
 `include "components/oled.v"
 
 `define BAUD_RATE 115300

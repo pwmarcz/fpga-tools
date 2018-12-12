@@ -1,4 +1,4 @@
-`include "uart.v"
+`include "components/uart.v"
 
 module transmit_hello(input wire  iCE_CLK,
                       input wire  RS232_Rx_TTL,
