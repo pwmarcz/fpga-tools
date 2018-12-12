@@ -26,11 +26,12 @@ The Makefile supports the following variables:
 - `V=source.v` - use `source.v` as main file
 - `TOP=topmod` - use `topmod` as top-level module for synthesis
 - `VERBOSE=1` - don't suppress output
+- `USE_SUDO=1` - use `sudo` when uploading the project
 
 There are following targets:
 
 - `make blif V=...`, `make bin V=...` - synthesize / place and route a project
-- `make flash V=...` - flash to board
+- `make flash V=...` - upload your project to the board
 - `make run V=...` - run in Icarus Verilog
 - `make sim V=...` - run and open `.vcd` file in GTKWave
 - `make test` - run all `*_tb.v` files
