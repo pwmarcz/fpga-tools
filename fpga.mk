@@ -97,14 +97,20 @@ endif
 build/%.out: %.v build/%.d
 	$(IVERILOG) -grelative-include -DVCD_FILE=\"build/$(<:.v=.vcd)\" -o $@ $<
 
-# Top-level goals (flash, sim, run, time)
+# Top-level goals, using V= parameter
 
 TESTS = $(shell find -name '*_tb.v')
 
-flash sim run time::
+blif bin flash sim run time::
 ifeq ($(V),)
-	$(error Define target name first, e.g.: make run V=myfile.v)
+	$(error Define target name first, e.g.: make $@ V=myfile.v)
 endif
+
+.PHONY: blif
+blif:: build/$(V:.v=.$(BOARD).blif)
+
+.PHONY: bin
+blif:: build/$(V:.v=.$(BOARD).bin)
 
 .PHONY: flash
 flash:: build/$(V:.v=.$(BOARD).bin)
