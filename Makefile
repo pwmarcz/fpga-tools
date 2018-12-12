@@ -97,11 +97,11 @@ endif
 # Simulation
 
 build/%.out: %.v build/%.d
-	$(IVERILOG) -DVCD_FILE=\"build/$(<:.v=.vcd)\" -o $@ $<
+	$(IVERILOG) -grelative-include -DVCD_FILE=\"build/$(<:.v=.vcd)\" -o $@ $<
 
 # Top-level goals (flash, sim, run, time)
 
-TESTS = $(wildcard *_tb.v)
+TESTS = $(shell find -name '*_tb.v')
 
 flash sim run time::
 ifeq ($(V),)
@@ -139,4 +139,4 @@ test::
 clean:
 	rm -f build/*
 
-include $(wildcard build/*.d)
+include $(find build -name '*.d')

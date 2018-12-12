@@ -1,6 +1,4 @@
-`include "oled.v"
-
-// Draw a 8x8-pixel checkerboard.
+`include "components/oled.v"
 
 module pattern(input wire        clk,
                input wire        read,

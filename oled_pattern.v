@@ -1,4 +1,4 @@
-`include "oled.v"
+`include "components/oled.v"
 
 // Draw a 8x8-pixel checkerboard.
 

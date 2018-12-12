@@ -1,20 +1,38 @@
-#!/bin/sh -e
+#!/usr/bin/env bash
+
+set -e
 
 if [ $# -ne 2 ]; then
     echo "Usage: $0 root file"
     exit 1
 fi
 
-ROOT=$1
-FILE=$2
-DEPS=$(sed -nr 's/^`include "(.*\.v)"$/\1/p' $FILE | tr '\n' ' ')
+path() {
+    if [[ "$(dirname $1)" == "." ]]; then
+        echo
+    else
+        echo $(dirname $1)/
+    fi
+}
 
-if [ -z "$DEPS" ]; then
-    exit
-fi
+enter() {
+    ROOT=$1
+    FILE=$2
+    DEPS=$(sed -nr 's/^`include "(.*\.v)"$/\1/p' $FILE | tr '\n' ' ')
 
-echo "$ROOT: $DEPS"
+    if [ -z "$DEPS" ]; then
+        return
+    fi
 
-for DEP in $DEPS; do
-    $0 $ROOT $DEP
-done
+    echo -n "$ROOT: "
+    for DEP in $DEPS; do
+        echo -n "$(path $FILE)$DEP "
+    done
+    echo
+
+    for DEP in $DEPS; do
+        enter $ROOT $(path $FILE)$DEP
+    done
+}
+
+enter $1 $2

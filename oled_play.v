@@ -1,5 +1,5 @@
 `include "uart.v"
-`include "oled.v"
+`include "components/oled.v"
 
 `define BAUD_RATE 115300
 

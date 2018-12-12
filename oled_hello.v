@@ -1,4 +1,4 @@
-`include "oled.v"
+`include "components/oled.v"
 
 
 module text_display(input wire       clk,
