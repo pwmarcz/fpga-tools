@@ -20,7 +20,7 @@ Just include the following in your Makefile:
 
     include .../fpga.mk
 
-See `fpga.mk.md` for list of possible commands.
+See `fpga.mk.txt` for list of possible commands.
 
 ## Components
 

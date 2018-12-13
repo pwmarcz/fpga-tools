@@ -1,0 +1,22 @@
+fpga.mk - build system for FPGA projects
+
+Targets (run with V=source.v):
+
+- make flash - upload your project to the board
+   - make blif - synthesize (create a .blif)
+   - make bin - place and route (create a .bin)
+- make run - run in Icarus Verilog
+- make sim - run and open '.vcd' file in GTKWave
+
+Global targets (no V= parameter needed):
+
+- make help - display this message
+- make test - run all '*_tb.v' files
+
+Variables:
+
+- V=source.v - use 'source.v' as main file
+- BOARD=board - select board to build for (supported: icestick, bx)
+- TOP=topmod - use 'topmod' as top-level module for synthesis
+- VERBOSE=1 - don't suppress output
+- USE_SUDO=1 - use sudo when uploading the project
