@@ -86,7 +86,7 @@ build/%.$(BOARD).asc: build/%.$(BOARD).blif $(PCF)
 ifdef RAM_FILE
 # Use icebram to replace memory contents.
 build/%.bin: build/%.asc $(RAM_FILE)
-	icebram random.hex build/default.hex < $< > $<.replaced
+	icebram random.hex $(RAM_FILE) < $< > $<.replaced
 	$(ICEPACK) $<.replaced $@
 else
 build/%.bin: build/%.asc
