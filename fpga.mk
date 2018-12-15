@@ -83,15 +83,8 @@ build/%.$(BOARD).blif: %.v build/%.d
 build/%.$(BOARD).asc: build/%.$(BOARD).blif $(PCF)
 	$(PNR) -p $(PCF) $(PNR_OPTS) $< -o $@
 
-ifdef RAM_FILE
-# Use icebram to replace memory contents.
-build/%.bin: build/%.asc $(RAM_FILE)
-	icebram random.hex $(RAM_FILE) < $< > $<.replaced
-	$(ICEPACK) $<.replaced $@
-else
 build/%.bin: build/%.asc
 	$(ICEPACK) $< $@
-endif
 
 # Simulation
 
