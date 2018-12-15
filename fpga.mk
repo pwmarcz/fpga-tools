@@ -137,4 +137,4 @@ test::
 clean:
 	rm -f build/*
 
-include $(find build -name '*.d')
+include $(shell find build -name '*.d')
