@@ -1,0 +1,20 @@
+#################################
+# iCEblink40 LP1K Demonstration Design
+# Family & Device:    iCE40LP1K
+# Package:            QN84
+#################################
+
+# Capacitive-sense buttons
+set_io BTN1 B22 -pullup yes
+set_io BTN2 B21 -pullup yes
+set_io BTN3 A27 -pullup yes
+set_io BTN4 A26 -pullup yes
+
+# LED outputs
+set_io LED1 A29
+set_io LED2 B20
+set_io LED3 B19
+set_io LED4 A25
+
+# 3.3 MHz clock input
+set_io CLK_3P3_MHZ A9
