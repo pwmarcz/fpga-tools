@@ -23,7 +23,7 @@ module top (
 	reg running = 0;
 
 	always @(posedge CLK) begin
-		if (clkdiv == 120000) begin
+		if (clkdiv == 12000) begin
 			clkdiv <= 0;
 			clkdiv_pulse <= 1;
 		end else begin
@@ -75,10 +75,13 @@ module top (
 		.dout(ss_bot)
 	);
 
+  assign {disp_top_inc, disp_bot_inc} = {disp_top, disp_bot} + 1;
+/*
 	bcd16_increment bot_inc (
 		.din({disp_top, disp_bot}),
 		.dout({disp_top_inc, disp_bot_inc})
 	);
+ */
 endmodule
 
 module bcd16_increment (
