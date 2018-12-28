@@ -55,6 +55,13 @@ CHIPDB = 8k
 PROG = $(TINYPROG) -p
 endif
 
+ifeq ($(BOARD),icebreaker)
+PNR_OPTS = -d 5k -P sg48
+DEVICE = up5k
+CHIPDB = 5k
+PROG = $(ICEPROG)
+endif
+
 # To use install 'moreutils'
 
 CHRONIC =
