@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module iceblink40_demo(
+module top(
      input  CLK_3P3_MHZ,   // 3.3 MHz clock from LTC1799 oscillator (pin A9)
      output LED1,          // Drives LED LD1 (pin A29)
      output LED2,          // Drives LED LD2 (pin B20)
