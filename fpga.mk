@@ -22,6 +22,7 @@ YOSYS ?= yosys
 PNR ?= arachne-pnr
 ICEPACK ?= icepack
 ICEPROG ?= iceprog
+ICEBURN ?= iCEburn
 TINYPROG ?= tinyprog
 ICETIME ?= icetime
 IVERILOG ?= iverilog
@@ -31,6 +32,7 @@ SHARE_ICEBOX = $$(dirname $$(which $(ICETIME)))/../share/icebox
 
 ifeq ($(USE_SUDO),1)
 ICEPROG := sudo $$(which $(ICEPROG))
+ICEBURN := sudo $$(which $(ICEBURN))
 TINYPROG := sudo $$(which $(TINYPROG))
 endif
 
@@ -46,6 +48,13 @@ PNR_OPTS = -d 1k -P tq144
 DEVICE = hx1k
 CHIPDB = 1k
 PROG = $(ICEPROG)
+endif
+
+ifeq ($(BOARD),iceblink)
+PNR_OPTS = -d 1k -P qn84
+DEVICE = lp1k
+CHIPDB = 1k
+PROG = $(ICEBURN) -vew
 endif
 
 ifeq ($(BOARD),bx)
@@ -77,6 +86,7 @@ build/%.d: %.v
 	@mkdir -p $(dir $@)
 	@$(SELF_DIR)/make-deps $(@:.d=.bx.blif) $< > $@
 	@$(SELF_DIR)/make-deps $(@:.d=.icestick.blif) $< >> $@
+	@$(SELF_DIR)/make-deps $(@:.d=.iceblink.blif) $< >> $@
 	@$(SELF_DIR)/make-deps $(@:.d=.out) $< >> $@
 
 # Synthesis

@@ -1,0 +1,170 @@
+#################################
+# iCEblink40 LP1K Demonstration Design
+# Family & Device:    iCE40LP1K
+# Package:            QN84
+#################################
+
+# Capacitive-sense buttons
+set_io -nowarn BTN1 B22 -pullup yes
+set_io -nowarn BTN2 B21 -pullup yes
+set_io -nowarn BTN3 A27 -pullup yes
+set_io -nowarn BTN4 A26 -pullup yes
+
+# LED outputs
+set_io -nowarn LED1 A29
+set_io -nowarn LED2 B20
+set_io -nowarn LED3 B19
+set_io -nowarn LED4 A25
+# Index LED name
+set_io -nowarn LED[0] A29
+set_io -nowarn LED[1] B20
+set_io -nowarn LED[2] B19
+set_io -nowarn LED[3] A25
+
+# 3.3 MHz clock input
+set_io -nowarn CLK_3P3_MHZ A9
+
+# J1 pins by name
+set_io -nowarn A11  A11
+set_io -nowarn B7   B7
+set_io -nowarn B9   B9
+set_io -nowarn A8   A8
+set_io -nowarn A10  A10
+set_io -nowarn B5   B5
+set_io -nowarn B8   B8
+# Index J1
+set_io -nowarn J1[0] A11
+set_io -nowarn J1[1] B7
+set_io -nowarn J1[2] B9
+set_io -nowarn J1[3] A8
+set_io -nowarn J1[4] A10
+set_io -nowarn J1[5] B5
+set_io -nowarn J1[6] B8
+
+# J2 pins by name
+set_io -nowarn A33 A33
+set_io -nowarn B26 B26
+set_io -nowarn A34 A34
+set_io -nowarn B27 B27
+set_io -nowarn A35 A35
+set_io -nowarn B38 B38
+set_io -nowarn A39 A39
+set_io -nowarn B29 B29
+set_io -nowarn A40 A40
+set_io -nowarn B30 B30
+set_io -nowarn A41 A41
+set_io -nowarn B31 B31
+set_io -nowarn B32 B32
+set_io -nowarn A43 A43
+set_io -nowarn A44 A44
+set_io -nowarn B34 B34
+# Index J2
+set_io -nowarn J2[0]    A33
+set_io -nowarn J2[1]    B26
+set_io -nowarn J2[2]    A34
+set_io -nowarn J2[3]    B27
+set_io -nowarn J2[4]    A35
+set_io -nowarn J2[5]    B38
+set_io -nowarn J2[6]    A39
+set_io -nowarn J2[7]    B29
+set_io -nowarn J2[8]    A40
+set_io -nowarn J2[9]    B30
+set_io -nowarn J2[10]   A41
+set_io -nowarn J2[11]   B31
+set_io -nowarn J2[12]   B32
+set_io -nowarn J2[13]   A43
+set_io -nowarn J2[14]   A44
+set_io -nowarn J2[15]   B34
+
+# JP3 pins by name
+set_io -nowarn A9   A9
+set_io -nowarn A16  A16
+# Index JP3
+set_io -nowarn JP3[0] A9
+set_io -nowarn JP3[1] A16
+
+# J4 pins by name
+set_io -nowarn A45 A45
+set_io -nowarn B35 B35
+set_io -nowarn A46 A46
+set_io -nowarn B36 B36
+set_io -nowarn A47 A47
+set_io -nowarn A48 A48
+set_io -nowarn A1 A1
+set_io -nowarn A2 A2
+set_io -nowarn B1 B1
+set_io -nowarn A3 A3
+set_io -nowarn B2 B2
+set_io -nowarn A4 A4
+set_io -nowarn B3 B3
+set_io -nowarn A5 A5
+set_io -nowarn B4 B4
+# Index J4
+set_io -nowarn J4[0]    A45
+set_io -nowarn J4[1]    B35
+set_io -nowarn J4[2]    A46
+set_io -nowarn J4[3]    B36
+set_io -nowarn J4[4]    A47
+set_io -nowarn J4[5]    A48
+set_io -nowarn J4[6]    A1
+set_io -nowarn J4[7]    A2
+set_io -nowarn J4[8]    B1
+set_io -nowarn J4[9]    A3
+set_io -nowarn J4[10]   B2
+set_io -nowarn J4[11]   A4
+# set_io -nowarn J4[12]   GND
+set_io -nowarn J4[13]   B3
+set_io -nowarn J4[14]   A5
+set_io -nowarn J4[15]   B4
+
+# J5 pins by name
+set_io -nowarn B24 B24
+set_io -nowarn B32 B32
+set_io -nowarn A31 A31
+set_io -nowarn B23 B23
+set_io -nowarn A20 A20
+set_io -nowarn B15 B15
+set_io -nowarn A19 A19
+set_io -nowarn B14 B14
+set_io -nowarn B13 B13
+set_io -nowarn B12 B12
+set_io -nowarn B11 B11
+set_io -nowarn B10 B10
+
+# J6 pins by name
+set_io -nowarn A12 A12
+set_io -nowarn A13 A13
+set_io -nowarn A14 A14
+set_io -nowarn A16 A16
+# Index J6
+set_io -nowarn J6[0] A12
+set_io -nowarn J6[1] A13
+set_io -nowarn J6[2] A14
+set_io -nowarn J6[3] A16
+
+# J11 pins by name (SPI PROM Connections)
+set_io -nowarn B18 B18
+set_io -nowarn B17 B17
+set_io -nowarn A22 A22
+set_io -nowarn A23 A23
+# J11 SPI pin names
+set_io -nowarn SS  B18
+set_io -nowarn SO  B17
+set_io -nowarn SI  A22
+set_io -nowarn SCK A23
+# Index J11
+set_io -nowarn J11[0] B18
+set_io -nowarn J11[1] B17
+set_io -nowarn J11[2] A22
+set_io -nowarn J11[3] A23
+
+# J12 pins by name (User LEDs)
+set_io -nowarn A29 A29
+set_io -nowarn B20 B20
+set_io -nowarn B19 B19
+set_io -nowarn A25 A25
+# Index J12
+set_io -nowarn J12[0] A29
+set_io -nowarn J12[1] B20
+set_io -nowarn J12[2] B19
+set_io -nowarn J12[3] A25
