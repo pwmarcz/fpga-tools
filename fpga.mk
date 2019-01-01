@@ -32,6 +32,7 @@ SHARE_ICEBOX = $$(dirname $$(which $(ICETIME)))/../share/icebox
 
 ifeq ($(USE_SUDO),1)
 ICEPROG := sudo $$(which $(ICEPROG))
+ICEBURN := sudo $$(which $(ICEBURN))
 TINYPROG := sudo $$(which $(TINYPROG))
 endif
 
