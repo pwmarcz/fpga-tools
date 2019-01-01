@@ -39,6 +39,11 @@ This is a module for UART communication by Tim Goddard, copied here:
 - [osdvu](https://opencores.org/project/osdvu) - the module page on opencores.org
 - [iCEstick-UART-Demo](https://github.com/cyrozap/iCEstick-UART-Demo) - example usage
 
+### `keypad.v`
+
+This is a module for 16 button keypad, like the one you can find [here at
+SparkFun](https://www.sparkfun.com/products/14881).
+
 ## License
 
 You're free to use all of the code under MIT license. See `LICENSE` for
