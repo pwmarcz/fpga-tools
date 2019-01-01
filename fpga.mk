@@ -50,7 +50,7 @@ CHIPDB = 1k
 PROG = $(ICEPROG)
 endif
 
-ifeq ($(BOARD),iCEblink40LP1K)
+ifeq ($(BOARD),iceblink)
 PNR_OPTS = -d 1k -P qn84
 DEVICE = lp1k
 CHIPDB = 1k
@@ -79,7 +79,7 @@ build/%.d: %.v
 	@mkdir -p $(dir $@)
 	@$(SELF_DIR)/make-deps $(@:.d=.bx.blif) $< > $@
 	@$(SELF_DIR)/make-deps $(@:.d=.icestick.blif) $< >> $@
-	@$(SELF_DIR)/make-deps $(@:.d=.iCEblink40LP1K.blif) $< >> $@
+	@$(SELF_DIR)/make-deps $(@:.d=.iceblink.blif) $< >> $@
 	@$(SELF_DIR)/make-deps $(@:.d=.out) $< >> $@
 
 # Synthesis

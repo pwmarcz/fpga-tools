@@ -11,7 +11,7 @@ toolchain.
 - `iverilog` - simulation and running test benches
 - `gtkwave` - viewing the simulation results
 - `tinyprog` - for TinyFPGA BX
-- [`iCEburn`](https://github.com/davidcarne/iceBurn) - for iCEblink40
+- [`iCEburn`](https://github.com/davidcarne/iceBurn) - for iceblink40
 
 The build system uses GNU make, bash and sed.
 
