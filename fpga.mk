@@ -4,7 +4,7 @@ SELF_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 # Show usage by default
 .PHONY: usage
 usage:
-	@cat $(SELF_DIR)/fpga.txt
+	@cat $(SELF_DIR)/fpga.mk.txt
 
 # Don't delete these
 .PRECIOUS: build/%.d build/%.blif build/%.bin build/%.asc
